@@ -1,0 +1,16 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "claude-project-bootstrap",
+  "description": "Bootstrap a new repo with the working-agreements + GitHub Project + CLAUDE.md hub-and-spokes setup",
+  "owner": {
+    "name": "blumenau1001011"
+  },
+  "plugins": [
+    {
+      "name": "claude-project-bootstrap",
+      "description": "Lay down working-agreements.md, roadmap.md, CLAUDE.md hub+spokes, and a GitHub Project (v2) with custom fields and labels — one command per new repo.",
+      "source": "./plugins/claude-project-bootstrap",
+      "category": "development"
+    }
+  ]
+}

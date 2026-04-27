@@ -1,0 +1,33 @@
+# `<subdir-name>` — Claude guidance
+
+**If also touching `<other-subdir>` code, refer to:** `<other-subdir>/CLAUDE.md` for `<what>` (not auto-loaded in this subtree's sessions) · `.claude/rules/<topic>.md` for `<topic>` · [`<project>` GitHub Project](<project-url>) (filter `Area: <this-area>`) for pending work in this subtree
+
+`<one paragraph: stack, dev server URL, how this subtree fits into the whole. Example: "FastAPI + SQLite (SQLAlchemy async / aiosqlite). Starts on http://localhost:8080. No test suite — verify changes via /health, /status."`>
+
+`<optional: pending-work callout if there are foundational things missing that future-Claude must not assume exist. Example: "Pending: backend/api/auth.py does not exist yet. Do not assume it does.">`
+
+## `<Topic 1: e.g. data flow / component status / module status>`
+
+`<concrete table or fenced diagram. For frontend: component status table. For backend: data flow ASCII diagram. For libraries: API surface map.>`
+
+| `<Component / Module>` | Status | Notes |
+|---|---|---|
+| `<name>` | Done | `<one-line: what it does>` |
+| `<name>` | Partial | `<what's done, what's missing>` |
+| `<name>` | Mock | `<note: uses static data; wiring pending>` |
+
+## `<Topic 2: a specific gotcha or convention only relevant in this subtree>`
+
+`<concrete rule. Example: "All tvg_id literals MUST be lowercase. Stream-DB tvg_ids are stored lowercase (iptv-org convention). The _BROADCASTER_TVG map historically had four mixed-case entries that silently dropped 164 active streams.">`
+
+## `<Topic 3: a non-obvious constraint or decision>`
+
+`<concrete explanation with the why. Example: "EPG cache TTL is 6h to match the backend's SportsDB refresh cadence — not arbitrary.">`
+
+## CSS / component / API gotchas
+
+`<bullet list of specific landmines. Each entry must name the file, the symptom, and the fix. Example: "lucide-react Dribbble icon does not exist in installed version — importing causes white screen with no console error. Use Volleyball instead. Verify unknown icons via: node -e \"require('./node_modules/lucide-react/dist/cjs/lucide-react.js').IconName\"">`
+
+## Deferred features
+
+See the [`<project>` GitHub Project](<project-url>) (filter `Area: <this-area>`) for all pending work in this subtree.

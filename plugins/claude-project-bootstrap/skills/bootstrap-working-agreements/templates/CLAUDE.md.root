@@ -1,0 +1,68 @@
+# CLAUDE.md
+
+## What `<project-name>` is
+
+`<one paragraph: what this project does, who uses it, what shape it takes (web app / CLI / library / service), and the key constraint that future-Claude needs to know on turn 1>`
+
+`<optional: an architecture sketch in a fenced block, or a tier table if the product has tiers>`
+
+## What's built vs pending
+
+| Area | Status |
+|---|---|
+| `<feature / module 1>` | Done |
+| `<feature / module 2>` | Partial — `<one-line note>` |
+| `<feature / module 3>` | Pending |
+
+This table is a snapshot. **Live planning source is the [`<project-name>` GitHub Project](<project-url>)** — query it via `gh project item-list <N> --owner <owner>` for current state (priorities, in-progress items, new bugs) before answering "what's next" or proposing work. Don't infer pending work from this file alone.
+
+---
+
+## Detailed guidance (auto-loaded by subdirectory)
+
+- `<subdir-1>/CLAUDE.md` — `<one-line: what's specific to this subtree>`
+- `<subdir-2>/CLAUDE.md` — `<one-line>`
+- `.claude/rules/working-agreements.md` — issue/PR/branch lifecycle, scope discipline, lifecycle ownership. **Read at session start.**
+- `.claude/rules/roadmap.md` — release milestones, bars, out-of-scope. Source of truth for *"is this in scope for the current milestone?"*
+- `.claude/rules/decisions.md` — *why* things are the way they are. Read when a rule looks arbitrary or a path you'd suggest was already considered and rejected.
+- GitHub Project [`<project-name>`](<project-url>) — all planned features, bugs, and tech-debt (`<filterable views: e.g. Tier × Area × Priority>`)
+
+---
+
+## Working agreements
+
+All sessions on this repo follow `.claude/rules/working-agreements.md` — issue/PR/branch lifecycle, when to file vs not, scope discipline, lifecycle ownership. **Read it at session start before answering "what's next" or proposing work.** This is the durable contract for how we collaborate; the user drives product intent through conversation, Claude maintains the project board state automatically.
+
+---
+
+## Running it
+
+```bash
+<command to start the dev environment>
+```
+
+`<one-line: dev URL, port, key env vars>`
+
+`<optional: separate commands for backend / frontend / tests>`
+
+## Configuration
+
+`<one-line: where config lives, what's gitignored, what's committed>`
+
+## Branch strategy
+
+`<integration-branch>` is the working branch. Merge to `main` when `<concrete release criterion>`. `<one-line: feature branches off integration, see working-agreements.md for lifecycle>`
+
+## Keeping these files current
+
+| When (concrete trigger) | What to update |
+|---|---|
+| Component moves from mock data → real API call | Status table in `<subdir>/CLAUDE.md` |
+| A "Pending" row above ships | Move to "Done" in the snapshot table (Project is live source — table is just a hint) |
+| Issue ships via PR | Close via `Closes #N` in PR body; if target ≠ default branch, also `gh issue close N` |
+| New gotcha / constraint / decision found in a subdirectory | Append to that `<subdir>/CLAUDE.md` or relevant `.claude/rules/<topic>.md` |
+| Stale fact found | Correct it in place — same commit as the rename if possible |
+
+## Git
+
+Always push immediately after each commit.
