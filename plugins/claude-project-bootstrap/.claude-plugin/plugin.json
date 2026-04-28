@@ -2,6 +2,6 @@
   "name": "claude-project-bootstrap",
   "description": "Bootstrap a new repo with working-agreements, GitHub Project, and CLAUDE.md hub-and-spokes — runs github-project-setup, split-claudemd, and bootstrap-working-agreements as one flow or individually.",
   "author": {
-    "name": "blumenau1001011"
+    "name": "toBzh30"
   }
 }
