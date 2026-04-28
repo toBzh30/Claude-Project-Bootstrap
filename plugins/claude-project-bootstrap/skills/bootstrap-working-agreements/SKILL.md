@@ -108,10 +108,27 @@ Read the bundled `templates/working-agreements.md`. Substitute these placeholder
 |---|---|
 | `<integration-branch>` | The branch from Step 2 question 3. Multiple occurrences. |
 | `<example-large-file-1>` and `<example-large-file-2>` | The two file names from Step 2 question 5. If the user named only one, drop the second from the bullet so it doesn't read as a placeholder. |
+| `<owner>` | The repo's owner from Step 1's `gh repo view`. Used in cross-repo refs and in the "Setting Issue type" subsection. |
+| `<TYPE_ID_TASK>`, `<TYPE_ID_BUG>`, `<TYPE_ID_FEATURE>` | The org's GitHub Issue type IDs. Query them per Step 4a below — or strip the subsection if unavailable. |
 
 **Do not substitute** the example branch names (`feat/4-zitadel-auth`, `fix/22-rate-limit`, etc.) — they are illustrative of the *shape* of the convention, not project-specific. Leave them.
 
 Write the file. Then `mkdir -p .claude/rules/` first if needed (it usually already exists from `github-project-setup`).
+
+### Step 4a — Resolve GitHub Issue type IDs (or strip the subsection)
+
+GitHub Issue types are an **org-level** feature, configured in **Org Settings → Repository policies → Issue types**. The template's "Setting Issue type" subsection caches the org's IDs so future Claude sessions don't re-query each time. Resolve them now:
+
+```bash
+gh api graphql -f query='query { repository(owner: "<owner>", name: "<repo>") { issueTypes(first: 20) { nodes { id name } } } }' \
+  --jq '.data.repository.issueTypes.nodes[] | "\(.name)\t\(.id)"'
+```
+
+Three outcomes:
+
+1. **`Task`, `Bug`, `Feature` returned** (the GitHub defaults): substitute each ID into the corresponding `<TYPE_ID_*>` placeholder. Done.
+2. **No nodes returned**: Issue types aren't enabled for this org, **or** the repo is user-owned (personal repos don't get this feature). Strip the entire `### Setting Issue type` subsection from the template before writing, **and** strip the parenthetical "(see 'Setting Issue type' below)" from the lifecycle table's create row — leave that row as it was originally. Tell the user: *"GitHub Issue types unavailable for `<owner>` — skipped that subsection. Enable in Org Settings → Repository policies → Issue types if you want it later."*
+3. **Different type names** (e.g., the org renamed `Feature` to `Story`): surface the actual type names to the user and ask: *"Map `bug`/`feature` labels to which of `<actual names>`? Or strip the subsection?"* Don't silently rename.
 
 ---
 

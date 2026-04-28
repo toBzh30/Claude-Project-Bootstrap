@@ -1,6 +1,7 @@
 name: Feature
 description: New capability or product addition
 title: "[feature] "
+type: Feature
 labels: ["feature"]
 body:
   - type: textarea
