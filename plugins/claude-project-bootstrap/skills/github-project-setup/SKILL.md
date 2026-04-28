@@ -63,25 +63,64 @@ gh auth refresh -s project
 
 `project` covers both read and write. Without it, every `gh project` call will 403.
 
-Identify the repo and owner:
+Identify the repo, its owner, and your gh user:
 
 ```bash
-gh repo view --json nameWithOwner -q .nameWithOwner
+gh repo view --json nameWithOwner,owner -q '{repo: .nameWithOwner, ownerType: .owner.__typename}'
+gh api user --jq .login
 ```
 
-This is `owner/repo`. The Project lives under the owner (user or org), not the repo.
+Capture three values for use in Step 2:
+- `<owner>/<repo>` from `nameWithOwner` (e.g., `acme/widget`)
+- `<owner-type>` from `ownerType` — `User` or `Organization`
+- `<gh-user>` from `gh api user` — your authenticated GitHub login
+
+Note: GitHub Projects (v2) live under a **user or org namespace**, not under a repo. The repo links to projects via its sidebar but does not own them. Step 2 decides which namespace this project will live under.
 
 ---
 
-## Step 2 — Discover existing planning state
+## Step 2 — Discover existing planning state and choose project namespace
 
 Read in parallel:
 - Root `CLAUDE.md` if present — gives you the project's vocabulary (product tiers, area names, current priorities).
 - Any `deferred.md`, `TODO.md`, `ROADMAP.md`, `BACKLOG.md` under `.claude/rules/` or repo root.
 - Existing labels: `gh label list -R <owner>/<repo>`.
-- Existing project (the user may already have one): `gh project list --owner <owner>` — if yes, ask whether to extend it or create new.
 
-Use what you read to **propose** the field values. Don't ask the user to invent them from scratch.
+**List existing projects across candidate namespaces.** Cross-namespace duplicates are a real failure mode — don't silently create a second board if one already exists somewhere relevant. Run:
+
+```bash
+gh project list --owner <owner> --format json --jq '.projects[] | "\(.number)\t\(.title)"'
+# Skip the next call if <gh-user> == <owner>
+gh project list --owner <gh-user> --format json --jq '.projects[] | "\(.number)\t\(.title)"'
+```
+
+Surface anything that looks like it might already track this repo (title contains the repo or project name, or anything else recognizable).
+
+**Decide the project namespace.** Surface the choice explicitly — don't auto-pick.
+
+> The project board lives under a user or org **namespace**, not under the repo itself. The repo can link to a project, but doesn't own it. The repo's owner is **`<owner>`** (a `<owner-type>`).
+>
+> Options:
+> 1. **Place under `<owner>`** (repo owner, `<owner-type>`) — the board lives next to the repo and appears in `<owner>/<repo>`'s Projects tab automatically. If `<owner>` is an **Organization**, the board is in **org context** — visible and editable to org members with appropriate permissions. If `<owner>` is a **User**, the board is private to that user unless they grant collaborators. **Recommended unless you have a reason not to.**
+> 2. **Place under `<gh-user>`** (your personal namespace) — only you see it unless you add collaborators. Useful for solo planning on an org repo, or when you want to track work without org-wide visibility.
+> 3. **Place under a different user or org** — name a namespace where you have project-create permission. Requires `project` scope on a token with write access to that namespace.
+>
+> Existing projects under `<owner>`: `<list from step above, or "none">`
+> Existing projects under `<gh-user>`: `<list, or "none">`  (omit line if same as `<owner>`)
+>
+> Which do you want? (default: 1)
+
+Wait for the user's choice. Capture as `<project-owner>`. **All `gh project ...` calls in later steps use `--owner <project-owner>`.** Repo-scoped calls (`gh issue ...`, `gh label ...`, `gh repo ...`) keep using `<owner>/<repo>`.
+
+**If the user wants to extend an existing project** — capture its number as `<N>` and skip Step 4's project-creation block. Still run the field-creation block to add any missing Tier/Area/Priority/Effort fields.
+
+**If `<project-owner>` ≠ `<owner>`** — surface the implication explicitly so the user knows what they're choosing:
+
+> Note: the project will live under `<project-owner>`, not `<owner>` (the repo's owner). It will **not** appear in `<owner>/<repo>`'s Projects tab automatically. To link them, either:
+> - Add `<owner>/<repo>` as a "linked repository" in the project's settings (Project → ⋯ → Settings → Manage access → Add repository), so issues from this repo can be added to the project; OR
+> - Just reference the project URL from the repo's `CLAUDE.md` or `README.md` and skip the GitHub-side linking.
+
+Use what you read (CLAUDE.md, planning docs) to **propose** the field values in Step 3. Don't ask the user to invent them from scratch.
 
 ---
 
@@ -116,24 +155,24 @@ Present the proposed values to the user as a table and ask for confirmation/edit
 
 ## Step 4 — Create the project (if it doesn't exist) and fields
 
-User-friendlier path: ask the user to create the empty project in the GitHub UI (`github.com/<owner>?tab=projects` → New project → Board template → name it). They click through once to see the UI; takes 30 seconds. Then they paste the URL or project number back, and you do the rest via gh.
+User-friendlier path: ask the user to create the empty project in the GitHub UI (`github.com/<project-owner>?tab=projects` → New project → Board template → name it). They click through once to see the UI; takes 30 seconds. Then they paste the URL or project number back, and you do the rest via gh.
 
 CLI alternative if the user prefers automation:
 
 ```bash
-gh project create --owner <owner> --title "<Project name>"
+gh project create --owner <project-owner> --title "<Project name>"
 ```
 
 Once you have the project number, fetch the existing fields:
 
 ```bash
-gh project field-list <N> --owner <owner> --format json > /tmp/fields.json
+gh project field-list <N> --owner <project-owner> --format json > /tmp/fields.json
 ```
 
 For each missing custom field, create it. Single-select fields use comma-separated options:
 
 ```bash
-gh project field-create <N> --owner <owner> \
+gh project field-create <N> --owner <project-owner> \
   --name Tier --data-type SINGLE_SELECT \
   --single-select-options "Novice,Amateur,Pro,Infra,Tech-debt"
 ```
@@ -291,11 +330,13 @@ The bundled `scripts/migrate_doc.py` is a starting point. Adapt it per project:
 2. Parse each entry into an issue spec: `{title, body, labels, tier, area, priority, milestone}`. `milestone` is optional — only set if Step 5b ran.
 3. **Show the user the planned issue list as a table** (title, labels, tier, area, priority, milestone) — *wait for confirmation before creating anything*.
 4. Edit `scripts/migrate_doc.py` (copy to `/tmp/`) with:
-   - `REPO`, `OWNER`, `PROJECT_NUMBER`, `PROJECT_ID`
+   - `REPO` = `<owner>/<repo>` (the repo, where issues are filed)
+   - `OWNER` = `<project-owner>` (the *project's* namespace, from Step 2 — may differ from the repo owner)
+   - `PROJECT_NUMBER`, `PROJECT_ID`
    - Field IDs and option IDs from Step 4
    - The `ISSUES = [...]` array (each entry can include an optional `"milestone": "Alpha"` key)
 5. Run it. The script: creates each issue, adds it to the project, sets Tier/Area/Priority, optionally sets the milestone via `gh issue edit -m`. Effort is left blank (user sizes during triage).
-6. Verify: `gh project item-list <N> --owner <owner> --limit 50` should show all the new items. If milestones are in use, also check `gh issue list -R <owner>/<repo> --milestone "<name>" --limit 50`.
+6. Verify: `gh project item-list <N> --owner <project-owner> --limit 50` should show all the new items. If milestones are in use, also check `gh issue list -R <owner>/<repo> --milestone "<name>" --limit 50`.
 
 After the migration runs successfully, **delete the source doc** and update CLAUDE.md cross-references (Step 8).
 
@@ -311,8 +352,11 @@ Search for stale references:
 grep -rn "deferred\.md\|TODO\.md\|ROADMAP\.md" --include="*.md" --include="*.py" --include="*.tsx" --include="*.ts" .
 ```
 
-For each match, replace the file reference with a link to the GitHub Project:
-`https://github.com/users/<owner>/projects/<N>` (user-scoped) or `https://github.com/<org>/<repo>/projects/<N>` (org/repo-scoped).
+For each match, replace the file reference with a link to the GitHub Project. The URL format depends on whether `<project-owner>` is a user or org:
+- User-owned: `https://github.com/users/<project-owner>/projects/<N>`
+- Org-owned: `https://github.com/orgs/<project-owner>/projects/<N>`
+
+Capture the canonical URL from `gh project view <N> --owner <project-owner> --format json --jq .url` if unsure.
 
 If the root `CLAUDE.md` has a "Keeping these files current" or similar table mentioning the deferred file, update those rows:
 
