@@ -1,6 +1,6 @@
 ---
 name: github-project-setup
-description: Set up a GitHub Project (v2) for a repo with standardized statuses, custom fields (Tier/Area/Priority/Effort), labels, and issue templates. Optionally migrate an existing planning doc (deferred.md / TODO.md / ROADMAP.md / etc.) into auto-added issues. Use when the user wants to start tracking features/bugs/tech-debt in a structured project board, or asks how to convert a markdown todo list into one.
+description: Set up a GitHub Project (v2) for a single repo or a multi-repo platform. Standardized statuses, custom fields (Tier or Initiative + Area/Priority/Effort), labels, and issue templates. Single-repo flow uses GitHub milestones; multi-repo flow uses a Project Initiative field for cross-repo coordination and surfaces the built-in Repository column. Optionally migrate an existing planning doc (deferred.md / TODO.md / ROADMAP.md / etc.) into auto-added issues. Use when the user wants to start tracking features/bugs/tech-debt in a structured project board, or asks how to coordinate across multiple repos under one org.
 user-invocable: true
 allowed-tools:
   - Read
@@ -17,9 +17,14 @@ allowed-tools:
   - Bash(git *)
 ---
 
-# /github-project-setup — Bootstrap a GitHub Project for a repo
+# /github-project-setup — Bootstrap a GitHub Project for a repo or multi-repo platform
 
-The goal: a single project board that holds *all* in-flight work (features, bugs, tech-debt) with consistent custom fields so you can group, filter, and prioritise across types. The defaults below are battle-tested; the per-project work is choosing the right Tier/Area values and (optionally) migrating an existing planning doc.
+The goal: a single project board that holds *all* in-flight work (features, bugs, tech-debt) with consistent custom fields so you can group, filter, and prioritise across types. **The skill handles two project shapes**:
+
+- **Single-repo** — one Project tracks one repo. GitHub milestones for releases. Tier/Area/Priority/Effort custom fields.
+- **Multi-repo** — one Project tracks several repos under the same org (typical for platforms with split frontend/backend/infra/runtime repos). Initiative custom field replaces Tier as the strategic axis; built-in Repository column added to default views; per-repo milestones de-emphasized in favor of cross-repo Initiatives.
+
+Step 1 detects which case applies and the rest of the flow branches accordingly.
 
 **This skill proposes and waits for confirmation before creating issues or fields.** Names are project-specific — never auto-generate without a check.
 
@@ -77,6 +82,26 @@ Capture three values for use in Step 2:
 
 Note: GitHub Projects (v2) live under a **user or org namespace**, not under a repo. The repo links to projects via its sidebar but does not own them. Step 2 decides which namespace this project will live under.
 
+**Detect project scope (single-repo vs multi-repo).** A multi-repo platform (several services / packages / clients under one org sharing strategic milestones) needs different field shape than a single-repo project. List repos under the owner:
+
+```bash
+gh repo list <owner> --limit 100 --json name --jq '.[].name'
+```
+
+Surface the choice explicitly — don't auto-pick:
+
+> The owner `<owner>` has `<N>` repo(s): `<list, truncated to 10>`.
+>
+> Will this Project track:
+> 1. **Just `<repo>`** — single-repo Project. Per-repo GitHub milestones, repo-scoped tracking issues, templates land in this repo only. **Default for solo packages, libraries, single-product webapps.**
+> 2. **Multiple repos under `<owner>`** — multi-repo platform Project. Strategic coordination via a Project-level **Initiative** field; per-repo GitHub milestones de-emphasized (only used if the user does per-repo release tagging); tracking issues live in whichever repo has the most weight per Initiative. **Default for platforms / multi-service projects sharing a roadmap across 2+ repos.**
+>
+> Default: option 1 if only one repo. Option 2 if 3+ repos likely share initiatives.
+
+Wait for the user's choice. Capture as `<project-scope>` (`single-repo` or `multi-repo`).
+
+**If `<project-scope>` = `multi-repo`**: strongly recommend placing the Project at the org namespace in Step 2 (cross-repo issues are easiest to add when the Project sits at org level). Surface this explicitly when Step 2's namespace prompt fires.
+
 ---
 
 ## Step 2 — Discover existing planning state and choose project namespace
@@ -124,11 +149,18 @@ Use what you read (CLAUDE.md, planning docs) to **propose** the field values in 
 
 ---
 
-## Step 3 — Propose Tier and Area values
+## Step 3 — Propose Tier / Initiative and Area values
 
-These two fields are the most project-specific. Don't hardcode.
+The dimension fields are the most project-specific. Don't hardcode.
 
-**Tier** — the dimension users want to see in the Roadmap view. Common patterns:
+**Pick the strategic dimension based on `<project-scope>`:**
+
+- **Single-repo (`<project-scope>` = `single-repo`)** → use **Tier** (which user surface / product layer this serves)
+- **Multi-repo (`<project-scope>` = `multi-repo`)** → use **Initiative** (which cross-repo strategic milestone this gates) and **skip Tier** unless the platform also has a tier dimension worth tracking
+
+Most projects have one or the other, not both. Tier is for "which audience": `Novice/Amateur/Pro` or `Free/Paid/Premium`. Initiative is for "which roadmap milestone": `M1/M2/M3` or `Alpha/Beta/GA`. Don't conflate.
+
+**Tier** — the dimension users want to see in the Roadmap view (single-repo case). Common patterns:
 
 | Project type | Tier values |
 |---|---|
@@ -136,6 +168,16 @@ These two fields are the most project-specific. Don't hardcode.
 | Internal tool / B2B | `Now / Next / Later / Tech-debt` |
 | Library or SDK | (skip Tier entirely; use Priority alone) |
 | Single-developer side project | `Core / Polish / Stretch / Tech-debt` |
+
+**Initiative** — the cross-repo strategic milestone (multi-repo case). Almost always project-specific; read the user's planning docs to draft. Common patterns:
+
+| Project shape | Initiative values |
+|---|---|
+| Phased platform launch | `M1 / M2 / M3 / M4 / Phase-2 / Backlog` |
+| Quarter-driven roadmap | `Q1-2026 / Q2-2026 / Q3-2026 / Backlog` |
+| Theme-driven (capability-based) | e.g. `Auth / Billing / Observability / Backlog` |
+
+Surface 2–3 candidate option lists to the user; wait for their pick. Initiatives are easier to rename later than to invent on the fly — bias toward fewer, broader values rather than many narrow ones.
 
 **Area** — codebase split. Derive from the repo structure:
 
@@ -172,12 +214,29 @@ gh project field-list <N> --owner <project-owner> --format json > /tmp/fields.js
 For each missing custom field, create it. Single-select fields use comma-separated options:
 
 ```bash
+# Single-repo case: Tier
 gh project field-create <N> --owner <project-owner> \
   --name Tier --data-type SINGLE_SELECT \
   --single-select-options "Novice,Amateur,Pro,Infra,Tech-debt"
+
+# Multi-repo case: Initiative (instead of Tier)
+gh project field-create <N> --owner <project-owner> \
+  --name Initiative --data-type SINGLE_SELECT \
+  --single-select-options "M1,M2,M3,M4,Phase-2,Backlog"
 ```
 
-Repeat for Area, Priority, Effort. The default Status field already exists and is editable via the UI (or `gh project field-update`) — add `Blocked` if it's not there.
+Create only the strategic-dimension field that matches `<project-scope>` (Tier xor Initiative — not both unless the user explicitly wants both axes). Then create Area, Priority, Effort regardless of scope. The default Status field already exists and is editable via the UI (or `gh project field-update`) — add `Blocked` if it's not there.
+
+**Multi-repo only — surface the built-in Repository field in default views.** GitHub auto-tracks the repo for every Project item but hides the column by default. To make `Repository` visible (essential for cross-repo group/filter):
+
+> The built-in **Repository** column is the cleanest way to see "which repo did this come from" — no custom field needed. It can't be added via `gh project field-create` (it already exists, just hidden). Add it manually:
+>
+> 1. Open the Project in browser → pick a view (Board / Table / Roadmap)
+> 2. Click `+` next to the column headers, or ⋯ on the view → Fields
+> 3. Toggle **Repository** on
+> 4. Repeat for every default view (Board, Table, Roadmap)
+>
+> The user does this once after Step 4 completes — it's a 30-second UI step.
 
 After all fields exist, re-fetch `gh project field-list ... --format json` and **save the field IDs and option IDs** to a JSON file. You'll need them in Step 7.
 
@@ -205,11 +264,16 @@ Adjust the set per project: a docs-heavy repo might add `docs`; a single-languag
 
 ---
 
-## Step 5b — (Optional) Set up milestones
+## Step 5b — (Optional) Cross-repo initiatives or per-repo milestones
+
+This step branches by `<project-scope>`:
+
+- **Single-repo (`<project-scope>` = `single-repo`)** → use **GitHub milestones** as below. Tracking issues live in this repo and auto-progress works.
+- **Multi-repo (`<project-scope>` = `multi-repo`)** → skip GitHub milestones for strategic phases (they're repo-scoped and don't span repos cleanly). Use the **Project Initiative field** created in Step 4 as the cross-repo source of truth. Jump to the **Multi-repo variant** at the end of this section.
 
 Ask: **"Do you want milestone-based release planning (Alpha/Beta/GA pattern), or continuous-flow shipping?"**
 
-Skip this step for libraries, side projects, or any product without discrete release boundaries. For products shipping to real users in stages, this is the accountability mechanism — without it, scope drift is the default.
+Skip this step entirely for libraries, side projects, or any product without discrete release boundaries. For products shipping to real users in stages, this is the accountability mechanism — without it, scope drift is the default.
 
 ### What you build (when enabled)
 
@@ -290,6 +354,77 @@ Add a row to root `CLAUDE.md`'s "Detailed guidance" list pointing at `roadmap.md
 - `.claude/rules/roadmap.md` — release milestones (<list>), bars, out-of-scope. Source of truth for "is this in scope for the current milestone?"
 ```
 
+### Multi-repo variant — Initiative field instead of GitHub milestones
+
+If `<project-scope>` = `multi-repo`, the cross-repo coordination unit is the Project's `Initiative` field (created in Step 4). GitHub milestones are repo-scoped and would have to be replicated across N repos, which drifts. Skip GitHub milestone creation entirely.
+
+**Tier ≠ Initiative ≠ per-repo Milestone.** State this in the roadmap doc explicitly:
+- **Tier** (single-repo concept; usually skipped in multi-repo) = which user surface this serves.
+- **Initiative** (multi-repo strategic unit) = which cross-repo phase this gates. Set on every issue in the Project regardless of which repo it lives in.
+- **Per-repo Milestone** (orthogonal, optional) = which release tag closes it within its own repo. Use only if the user does per-repo release tagging; otherwise skip.
+
+#### Procedure
+
+1. **Propose initiative names + bars.** Read existing planning docs (CLAUDE.md, README, plan docs, equivalent) to draft. Show a table to the user:
+
+   | Initiative | Bar (one paragraph) | Out of scope (bullets) |
+
+   Wait for confirmation/edits.
+
+2. **Skip GitHub milestone creation.** The Initiative field already exists from Step 4. There is nothing to create at the GitHub-milestone level for strategic phases.
+
+3. **Write `.claude/rules/roadmap.md`** from `templates/roadmap.md`. Adapt the template's "GitHub Milestones" header to "Project Initiatives" and reflect the multi-repo doctrine — one section per Initiative with Bar / Tracking / In scope / Out of scope. The cross-repo aspect should be explicit ("issues from any of these repos: `<repo1>, <repo2>, ...` can be tagged with this Initiative").
+
+4. **Add cross-repo issues to the Project, set Initiative field.** For each existing issue across all involved repos that should land in an Initiative:
+
+   ```bash
+   gh project item-add <N> --owner <project-owner> --url <issue-url>
+   gh project item-edit --id <item-id> --project-id <PVT_...> \
+     --field-id <F_INITIATIVE> --single-select-option-id <opt-id>
+   ```
+
+   Show the mapping as a table for user confirmation before applying. Same `<F_INITIATIVE>` and option IDs come from Step 4's saved JSON.
+
+5. **Identify gaps and open new issues** in whichever repo each gap belongs to. They auto-add to the Project (if the Project's "Auto-add to project" workflow is configured for each repo — see "Project workflows" below). Set their Initiative on add.
+
+6. **Create one tracking issue per Initiative**, in whichever repo carries the most weight for that Initiative (most sub-issues, most-coupled subsystem, or just the user's preference). Body lists sub-issues across all repos as a markdown checklist:
+
+   ```bash
+   gh issue create -R <most-weighted-repo> \
+     -t "[initiative] M1 — private end-to-end beta" \
+     -b "$(cat <<'EOF'
+   **Closing this issue = we shipped M1.**
+
+   ## Bar
+   <one paragraph from the table>
+
+   ## Out of scope
+   - …
+
+   ## Sub-issues across the platform
+   - [ ] <owner>/<repo-A>#4 …
+   - [ ] <owner>/<repo-B>#12 …
+   - [ ] <owner>/<repo-C>#3 …
+
+   See \`.claude/rules/roadmap.md\` for the framework.
+   EOF
+   )"
+   ```
+
+   **Important caveat:** GitHub only auto-ticks the checklist when a referenced issue is in the **same repo** as the tracking issue (`#N` syntax). Cross-repo refs (`<owner>/<other-repo>#N`) **don't auto-tick** — they need manual checkmarks when those issues close. The tracking issue itself has no `feature`/`bug` label — it's a meta-issue.
+
+7. **Expose Repository + Initiative in the Project's Roadmap view.** UI step: open the project → Roadmap view → ⋯ → Fields → enable `Repository` and `Initiative`. Group by Initiative for cross-repo phase progress; group by Repository to see "what's left in repo X across all initiatives".
+
+8. **Issue templates per repo.** Step 6 only writes templates to `<owner>/<repo>` (the current repo). For multi-repo Projects, run this skill once per tracked repo OR copy `feature.yml` / `bug.yml` from this skill's `templates/` into each repo's `.github/ISSUE_TEMPLATE/` manually.
+
+#### Working-agreement contract for multi-repo
+
+Add a row to `.claude/rules/working-agreements.md` (the bootstrap-working-agreements skill writes this file): when an issue is filed in *any* tracked repo under `<project-owner>`, the filer (human or Claude) **must** add it to the Project and set its `Initiative` value at creation time. Without this contract, the Project misses signals from sibling repos and the cross-repo dimension breaks.
+
+#### Per-repo release milestones (optional, orthogonal)
+
+If the user has a per-repo release-tagging workflow (e.g., `v1.30` of repo A, `v0.5` of repo B), GitHub milestones can still be created **per repo, scoped to that repo's release semantics** — independent of the strategic Initiative. This is rare for continuously-deployed platforms and worth asking only if the user surfaces release tagging explicitly.
+
 ---
 
 ## Step 6 — Add issue templates
@@ -318,6 +453,12 @@ For each template, **check before clobbering**:
 
 Don't shell-copy — files might need path tweaks.
 
+**Multi-repo case**: this step writes templates to `<owner>/<repo>` only — the repo where the skill was invoked. Other tracked repos under `<project-owner>` get nothing here. To install templates everywhere, either:
+- Re-run this skill in each tracked repo (works, repetitive)
+- Manually copy `feature.yml` / `bug.yml` from this skill's `templates/` into each repo's `.github/ISSUE_TEMPLATE/`
+
+Surface this to the user explicitly: *"Templates landed in `<repo>` only. Multi-repo Project — sibling repos don't get them automatically. Want me to walk you through adding them to the others?"*
+
 ---
 
 ## Step 7 — (Optional) Migrate an existing planning doc to issues
@@ -327,16 +468,19 @@ If the user has a `deferred.md` (or similar) full of pending work, this is the h
 The bundled `scripts/migrate_doc.py` is a starting point. Adapt it per project:
 
 1. Read the source doc in full.
-2. Parse each entry into an issue spec: `{title, body, labels, tier, area, priority, milestone}`. `milestone` is optional — only set if Step 5b ran.
-3. **Show the user the planned issue list as a table** (title, labels, tier, area, priority, milestone) — *wait for confirmation before creating anything*.
+2. Parse each entry into an issue spec. Single-repo: `{title, body, labels, tier, area, priority, milestone}`. Multi-repo: `{title, body, labels, initiative, area, priority, repo}` — `repo` selects which `<owner>/<repo>` the issue is filed in; replace the `tier` key with `initiative`. `milestone`/`initiative` are optional.
+3. **Show the user the planned issue list as a table** (title, repo if multi-repo, labels, tier/initiative, area, priority, milestone) — *wait for confirmation before creating anything*.
 4. Edit `scripts/migrate_doc.py` (copy to `/tmp/`) with:
-   - `REPO` = `<owner>/<repo>` (the repo, where issues are filed)
+   - **Single-repo**: `REPO` = `<owner>/<repo>`. All issues land here.
+   - **Multi-repo**: `REPO` is unused at the constants level — instead, each entry in `ISSUES` carries its own `"repo": "<owner>/<other-repo>"` key, and the script's `gh issue create -R …` reads from per-issue. Keep `OWNER` = `<project-owner>`.
    - `OWNER` = `<project-owner>` (the *project's* namespace, from Step 2 — may differ from the repo owner)
    - `PROJECT_NUMBER`, `PROJECT_ID`
-   - Field IDs and option IDs from Step 4
-   - The `ISSUES = [...]` array (each entry can include an optional `"milestone": "Alpha"` key)
-5. Run it. The script: creates each issue, adds it to the project, sets Tier/Area/Priority, optionally sets the milestone via `gh issue edit -m`. Effort is left blank (user sizes during triage).
-6. Verify: `gh project item-list <N> --owner <project-owner> --limit 50` should show all the new items. If milestones are in use, also check `gh issue list -R <owner>/<repo> --milestone "<name>" --limit 50`.
+   - Field IDs and option IDs from Step 4 (rename `F_TIER` → `F_INITIATIVE` and `TIER` → `INITIATIVE` for the multi-repo case)
+   - The `ISSUES = [...]` array (each entry can include an optional `"milestone": "Alpha"` key for single-repo, or `"initiative": "M1"` for multi-repo)
+5. Run it. The script: creates each issue, adds it to the project, sets Tier-or-Initiative/Area/Priority, optionally sets the milestone via `gh issue edit -m`. Effort is left blank (user sizes during triage).
+6. Verify: `gh project item-list <N> --owner <project-owner> --limit 50` should show all the new items. Single-repo + milestones: also check `gh issue list -R <owner>/<repo> --milestone "<name>" --limit 50`. Multi-repo: filter the Project by Initiative=`<value>` in the UI to confirm cross-repo aggregation.
+
+**Multi-repo migration tip**: if the source doc spans many repos, batch by destination repo rather than running one mega-migration. Less to undo if a repo's mapping turns out wrong.
 
 After the migration runs successfully, **delete the source doc** and update CLAUDE.md cross-references (Step 8).
 
@@ -401,11 +545,15 @@ And recommend enabling:
 
 These three together mean the user almost never has to manage the project manually — issues and PRs drive everything.
 
+**Multi-repo case**: the "Auto-add to project" workflow is **per-repo** — it has to be enabled separately for each tracked repo. Walk the user through the Workflows panel once and have them add every repo under `<project-owner>` that should auto-add issues. Without this, sibling-repo issues won't land on the board automatically.
+
 ---
 
 ## Common failure modes
 
 - **`error: your authentication token is missing required scopes [project]`** — Step 1 was skipped or the user didn't run `gh auth refresh -s project`.
 - **`Could not resolve to a Project with the number X`** — wrong owner. User-scoped projects need `--owner <username>`; org-scoped need `--owner <orgname>`.
+- **Multi-repo: cross-repo sub-issue closes don't tick the tracking-issue checklist** — expected. GitHub only auto-ticks `#N` (same-repo) refs. `<owner>/<other-repo>#N` refs require manual checkmarks. If this becomes painful, write a small webhook/Action to reflect cross-repo closes onto the tracking issue body.
+- **Multi-repo: new issues in sibling repos don't appear in the Project** — "Auto-add to project" is per-repo; the workflow needs enabling on each tracked repo's Project Settings → Workflows. Easy to miss when adding a 4th or 5th repo months later.
 - **Field IDs / option IDs go stale** — if the user edits the project's field options in the UI between Step 4 and Step 7, re-fetch the field list. IDs change when options are deleted and re-added.
 - **`gh project item-add` succeeds but item doesn't appear in views** — views may have filters hiding it (e.g. "Status: In Progress" view won't show new items in Status: Todo). Ask the user to check the All Items view.
