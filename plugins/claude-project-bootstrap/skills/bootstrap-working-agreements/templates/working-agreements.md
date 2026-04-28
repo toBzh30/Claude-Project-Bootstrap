@@ -66,7 +66,7 @@ When ambiguous, ask. **Default-yes for discrete intent; default-no for housekeep
 
 | Event | Claude does (exact commands) |
 |---|---|
-| User mentions a discrete idea/bug/refactor | `gh issue create -t "<title>" -b "<body>" -l <labels>` (auto-added to project), then report back: *"filed as #N — title, labels=…, Tier=…, Area=…, Priority=…, milestone=…. Anything you'd add?"* |
+| User mentions a discrete idea/bug/refactor | `gh issue create -t "<title>" -b "<body>" -l <labels>` (auto-added to project), then set the **Issue type** (Bug / Feature / Task — see "Setting Issue type" below), then report back: *"filed as #N — title, type=…, labels=…, Tier=…, Area=…, Priority=…, milestone=…. Anything you'd add?"* |
 | User says something ambiguously trackable | Ask first: *"Should I file this as an issue, or handle it inline?"* |
 | Substantive new feature surfaces | Ask 2–3 clarifying questions (*who uses this? what triggers it? what's the simplest version that ships?*), then `gh issue create` with a real body |
 | Picking up a tracked issue #N | Follow read → architect → plan → review → execute (see "How we work through issues"). **Don't run `git checkout -b` or flip Status until the user has signed off on the approach.** Once approved: `git checkout -b <type>/N-<slug>`, set Status → In Progress (`gh project item-edit … --field-id <Status> --single-select-option-id <In Progress>`), `gh issue comment N -b "<one-line plan>"`. |
@@ -76,6 +76,34 @@ When ambiguous, ask. **Default-yes for discrete intent; default-no for housekeep
 | Decision worth logging surfaces (rule with non-obvious why, multi-week debate ends, pivot, rejected path, invisible constraint) | Add an entry to `.claude/rules/decisions.md` per the format in "When to log a decision" |
 | Shipping | PR body ends with `Closes #N`, `gh pr merge <PR> --squash` (or `--merge` for larger feature branches); if target ≠ default branch, follow up with `gh issue close N` and flip Status to Done manually |
 | Stale items in Todo for weeks | Surface for user: *"#N has been Todo since <date> — still relevant or close as wontfix?"* — user makes the call, never auto-close |
+
+### Setting Issue type
+
+`gh issue create` (as of v2.90) has no `--type` flag — set the GitHub-native Issue type via GraphQL after creation. Map labels → type: `bug` label → Bug, `feature` label → Feature, otherwise → Task. UI-filed issues already pick up `type:` from `.github/ISSUE_TEMPLATE/*.yml`; the GraphQL step is only needed for CLI-filed issues.
+
+```bash
+# Get the issue's node ID
+gh api graphql -f query='query { repository(owner: "<owner>", name: "<repo>") { issue(number: <N>) { id } } }'
+
+# Set the type
+gh api graphql -f query='mutation { updateIssueIssueType(input: { issueId: "<issue-node-id>", issueTypeId: "<type-id>" }) { issue { number issueType { name } } } }'
+```
+
+Type IDs for the `<owner>` namespace (filled in at bootstrap time — re-query if your org changes its issue types):
+
+| Type    | ID                  |
+|---------|---------------------|
+| Task    | `<TYPE_ID_TASK>`    |
+| Bug     | `<TYPE_ID_BUG>`     |
+| Feature | `<TYPE_ID_FEATURE>` |
+
+To re-query (if the IDs above ever go stale):
+
+```bash
+gh api graphql -f query='query { repository(owner: "<owner>", name: "<repo>") { issueTypes(first: 20) { nodes { id name } } } }'
+```
+
+If the query returns `issueTypes.nodes: []`, GitHub Issue types aren't enabled for the org — owner must enable them in **Org Settings → Repository policies → Issue types** before this mutation will succeed.
 
 ---
 

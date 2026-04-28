@@ -459,6 +459,8 @@ Don't shell-copy — files might need path tweaks.
 
 Surface this to the user explicitly: *"Templates landed in `<repo>` only. Multi-repo Project — sibling repos don't get them automatically. Want me to walk you through adding them to the others?"*
 
+**On the `type:` field**: both bundled templates carry `type: Bug` / `type: Feature` so UI-filed issues get the GitHub-native Issue type (Bug / Feature / Task) on creation. This requires Issue types to be **enabled at the org level** (Org Settings → Repository policies → Issue types). If they're not, the `type:` line is a silent no-op — issues file fine, just without a type. The companion `bootstrap-working-agreements` skill handles the CLI-filed path (`gh issue create` has no `--type` flag) by writing a GraphQL recipe into the project's `working-agreements.md`. Personal (user-owned) repos don't get Issue types at all — strip both lines before copying if `<owner-type>` is `User`.
+
 ---
 
 ## Step 7 — (Optional) Migrate an existing planning doc to issues
