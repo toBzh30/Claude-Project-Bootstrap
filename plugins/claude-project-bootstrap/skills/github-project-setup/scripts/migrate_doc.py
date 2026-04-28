@@ -18,7 +18,7 @@ import subprocess
 import sys
 
 # ── EDIT: project + repo coordinates ─────────────────────────────────────────
-REPO           = "OWNER/REPO"           # e.g. "blumenau1001011/TTV"
+REPO           = "OWNER/REPO"           # e.g. "your-org/your-repo"
 OWNER          = "OWNER"                # owner of the *project* (user or org)
 PROJECT_NUMBER = "1"                    # from project URL .../projects/<N>
 PROJECT_ID     = "PVT_xxxxxxxxxxxxxx"   # GraphQL node ID, from `gh project view <N> --owner <owner> --format json`

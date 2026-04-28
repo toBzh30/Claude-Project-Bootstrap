@@ -49,8 +49,8 @@ When ambiguous, ask. **Default-yes for discrete intent; default-no for housekeep
 - Branch name: `<type>/<issue-num>-<slug>` — short, lowercase, hyphens. Real examples:
   - `feat/4-zitadel-auth`
   - `fix/22-rate-limit`
-  - `chore/13-static-epg-cdn`
-  - `refactor/15-epg-stream-split` (or `tech-debt/15-…`)
+  - `chore/13-cdn-cache-headers`
+  - `refactor/15-db-schema-split` (or `tech-debt/15-…`)
 - PR title mirrors the issue title.
 - PR body **always includes `Closes #N`** so merge auto-closes the issue and the project's *"Item closed → Status: Done"* workflow fires.
   - **Gotcha:** `Closes` only auto-fires on merges into the **default branch** (typically `main`). PRs merging into integration branches like `<integration-branch>` *don't* auto-close. After merging such a PR, manually `gh issue close <N>` and flip the project Status to Done. Keep the `Closes` line in the body anyway — it auto-fires later when the integration branch eventually merges to main.

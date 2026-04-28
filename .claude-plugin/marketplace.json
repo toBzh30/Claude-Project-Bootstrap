@@ -3,7 +3,7 @@
   "name": "claude-project-bootstrap",
   "description": "Bootstrap a new repo with the working-agreements + GitHub Project + CLAUDE.md hub-and-spokes setup",
   "owner": {
-    "name": "blumenau1001011"
+    "name": "toBzh30"
   },
   "plugins": [
     {
