@@ -51,3 +51,19 @@ Edit files in this repo, push to GitHub, then in any Claude Code session:
 /plugin marketplace update claude-project-bootstrap
 /plugin install claude-project-bootstrap  # picks up the new version
 ```
+
+## Migration — repos bootstrapped before recent template changes
+
+Repos bootstrapped on older versions of this plugin won't retroactively pick up later template improvements (typed issue templates, new working-agreements sections, gitignore carve-outs, etc.). Two options after a plugin update lands:
+
+1. **Re-run `bootstrap-working-agreements`** in the affected repo. The skill detects existing `.claude/rules/` files and prompts before overwriting — pick "refresh templates only" to update content while keeping decisions/local additions.
+2. **One-shot type backfill for past untyped issues** (only relevant if the org has GitHub issue types and earlier issues were filed without them):
+
+   ```bash
+   for n in $(gh issue list -R <owner>/<repo> --json number,title -L 100 \
+              --jq '.[] | select(.type==null) | .number'); do
+     # title prefix → type mapping per org convention
+     # e.g. [bug] → Bug, [feature] → Feature, otherwise → Task
+     gh api -X PATCH repos/<owner>/<repo>/issues/$n -f type=<type-name>
+   done
+   ```
