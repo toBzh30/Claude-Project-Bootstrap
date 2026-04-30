@@ -82,6 +82,27 @@ Capture three values for use in Step 2:
 
 Note: GitHub Projects (v2) live under a **user or org namespace**, not under a repo. The repo links to projects via its sidebar but does not own them. Step 2 decides which namespace this project will live under.
 
+**Detect whether the org has GitHub issue types configured.** Try the org-level list first:
+
+```bash
+gh api orgs/<owner>/issue-types --jq '[.[].name]'
+```
+
+Fine-grained PATs often 403 here even when per-issue type reads succeed. **Fallback** — sample the type field on existing issues:
+
+```bash
+gh issue list -R <owner>/<repo> --limit 5 --json number --jq '.[].number' \
+  | xargs -I{} gh api repos/<owner>/<repo>/issues/{} --jq '.type.name' \
+  | sort -u
+```
+
+Sample at least 3–5 issues across the repo to capture the full configured set. Outcomes:
+
+- **Concrete type names returned** → org has issue types. Capture the set as `<configured-issue-types>` (and any title-prefix → type mapping observed, e.g. `[bug]` → Bug, `[feature]` → Feature) for downstream use in `bootstrap-working-agreements`'s template substitution.
+- **Every sample returns `null`** → types aren't enabled. Surface this and recommend enabling them at **Organization → Settings → Issue types** before continuing, or proceed without — issue templates' `type:` lines become silent no-ops, and CLI-filed issues skip the PATCH step.
+
+This detection is org-wide and shared across every repo under `<owner>` — if the org has types configured, *every* repo can use them.
+
 **Detect project scope (single-repo vs multi-repo).** A multi-repo platform (several services / packages / clients under one org sharing strategic milestones) needs different field shape than a single-repo project. List repos under the owner:
 
 ```bash
@@ -261,6 +282,8 @@ gh label create frontend --color 1d76db --description "Frontend work" -R <owner>
 ```
 
 Adjust the set per project: a docs-heavy repo might add `docs`; a single-language library might drop `frontend`/`backend` and use module names instead. Ask the user before adding non-default labels.
+
+**Types vs labels are orthogonal.** If the org has GitHub issue types configured (see Step 1's preflight), the org type set is the cross-repo "what kind of work is this" signal — `Bug` / `Feature` / `Task` carry across all repos in the org. Labels remain useful for finer-grained per-repo taxonomy (`tech-debt`, `infra`, `docs`) and don't replace types — keep both.
 
 ---
 
@@ -559,3 +582,7 @@ These three together mean the user almost never has to manage the project manual
 - **Multi-repo: new issues in sibling repos don't appear in the Project** — "Auto-add to project" is per-repo; the workflow needs enabling on each tracked repo's Project Settings → Workflows. Easy to miss when adding a 4th or 5th repo months later.
 - **Field IDs / option IDs go stale** — if the user edits the project's field options in the UI between Step 4 and Step 7, re-fetch the field list. IDs change when options are deleted and re-added.
 - **`gh project item-add` succeeds but item doesn't appear in views** — views may have filters hiding it (e.g. "Status: In Progress" view won't show new items in Status: Todo). Ask the user to check the All Items view.
+- **`gh api orgs/<owner>/<resource>` returns 403 "resource not accessible by personal access token"** — fine-grained PATs commonly lack scope for *list/admin* endpoints while still allowing reads on individual items. Before reporting it as a hard limitation, sample individual resources to discover the configured set. Same shape for many org-level taxonomies:
+  - **Org issue types blocked** → read `repos/<owner>/<repo>/issues/<N> --jq .type.name` on existing issues across the repo (or a sibling repo) to discover which types are in use.
+  - **Org Project field options blocked** → read the project's `field-list` directly (often allowed at the project level even when the org-list endpoint isn't).
+  - **Org-level label config blocked** → label *use* on issues is readable per-issue; sample to discover the in-use set.
