@@ -54,11 +54,23 @@ When ambiguous, ask. **Default-yes for discrete intent; default-no for housekeep
 - PR title mirrors the issue title.
 - PR body **always includes `Closes #N`** so merge auto-closes the issue and the project's *"Item closed → Status: Done"* workflow fires.
   - **Gotcha:** `Closes` only auto-fires on merges into the **default branch** (typically `main`). PRs merging into integration branches like `<integration-branch>` *don't* auto-close. After merging such a PR, manually `gh issue close <N>` and flip the project Status to Done. Keep the `Closes` line in the body anyway — it auto-fires later when the integration branch eventually merges to main.
-- **Squash-merge** for small PRs (one logical change). **Regular merge** for larger feature branches with meaningful intermediate commits.
 
-**Trivia** → direct commits to the working branch (`<integration-branch>`). No branch, no PR, no issue. Same standard: each commit is one logical change, push immediately.
+**Trivia** → direct commits to the working branch (`<integration-branch>`). No branch, no PR, no issue. Direct-to-`<integration-branch>` is effectively regular-merge — the commits *are* the history — so each commit is one logical change with a future-readable message. Push immediately.
 
 **Multi-machine sequencing**: each machine works on its own feature branch; only merges to `<integration-branch>` need to sequence across machines. This is the structural fix for multi-machine divergence.
+
+---
+
+## Commits and merging
+
+**Principle:** commit granularity should match what survives the merge.
+
+- **Squash-merge (default).** Branch commits are scratchpad — collapsed at merge. Commit as often as helps you (safety waypoints, "checkpoint before risky refactor"); the PR title/body becomes the one merged commit on `<integration-branch>`. Use for: single-concern PRs where the merged commit is the only useful unit of history. **Most PRs.**
+- **Regular merge / rebase-merge.** Branch commits become permanent `<integration-branch>` history. Each must be one logical change with a future-readable message; clean review-iteration noise via interactive rebase before merging. Use for: branches whose intermediate commits each say something a future reader or `git bisect` needs — typically multi-concern work (e.g. feature + tangentially-related fix) or refactors whose phases warrant their own `git blame`-able messages.
+
+**Multi-contributor projects:** lean harder on regular-merge with curated commits — `git blame` and `git bisect` resolution across years of history matters more when many people touch the same code. **Single-maintainer projects:** squash is almost always right.
+
+**Local commit habit (independent of merge policy):** commit at every meaningful waypoint on the branch. Local safety (machine dies, easy `git revert HEAD` after a wrong turn) is worth more than commit-count tidiness. With squash-merge there's no cost — commits collapse anyway.
 
 ---
 
