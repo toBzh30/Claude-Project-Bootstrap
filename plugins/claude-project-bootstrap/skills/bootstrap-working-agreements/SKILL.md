@@ -46,6 +46,40 @@ Wait for explicit *"continue"* before proceeding. Don't proceed silently.
 
 ---
 
+## Step 0.5 — Check `.gitignore` for `.claude/` patterns
+
+This skill writes durable rules under `.claude/rules/` that need to be committed. A directory-level ignore (`.claude/` with a trailing slash) silently excludes them — git can't re-include children of a fully-excluded directory, so `.claude/rules/working-agreements.md` won't show up in `git status` until someone notices.
+
+```bash
+grep -nE '^\.claude/?$' .gitignore 2>/dev/null
+```
+
+If a `.claude/` line is found, propose the carve-out fix — replace it with:
+
+```
+.claude/*
+!.claude/rules/
+```
+
+(plus a one-line comment: *"durable team contract committed; other Claude session state stays local"*). Wait for explicit user confirmation before editing — `.gitignore` changes affect what the team commits and shouldn't be silent.
+
+After the fix, verify:
+
+```bash
+git check-ignore -v .claude/rules/working-agreements.md
+```
+
+Should report **NOT IGNORED** (no output, exit code 1).
+
+Three cases:
+- **`.gitignore` has `.claude/` (directory ignore)** → propose the carve-out, wait for confirmation, then edit.
+- **`.gitignore` has `.claude/*` already** → no change needed; the carve-out pattern is the desired state.
+- **`.gitignore` doesn't mention `.claude/` at all** → no change needed; rules will be tracked by default.
+
+If `.gitignore` doesn't exist, skip silently — the rules will be tracked by default.
+
+---
+
 ## Step 1 — Preflight checks
 
 Run in parallel:
@@ -101,7 +135,7 @@ Pass through the answers from Step 2 so it doesn't re-ask: project name, milesto
 - Tracking issue per milestone
 - Optional planning-doc migration into auto-added issues
 
-Wait for it to complete. Capture: project URL, project number, milestone names, field names actually created (Tier/Area defaults may have been customised).
+Wait for it to complete. Capture: project URL, project number, milestone names, field names actually created (Tier/Area defaults may have been customised), **`<project-scope>`** (`single-repo` or `multi-repo`), and **`<strategic-field>`** (the strategic axis chosen — `Tier` for single-repo, `Initiative` for multi-repo).
 
 ---
 
@@ -114,31 +148,46 @@ Read the bundled `templates/working-agreements.md`. Substitute these placeholder
 | `<integration-branch>` | The branch from Step 2 question 3. Multiple occurrences. |
 | `<example-large-file-1>` and `<example-large-file-2>` | The two file names from Step 2 question 5. If the user named only one, drop the second from the bullet so it doesn't read as a placeholder. |
 | `<owner>` | The repo's owner from Step 1's `gh repo view`. Used in cross-repo refs and in the "Setting Issue type" subsection. |
-| `<TYPE_ID_TASK>`, `<TYPE_ID_BUG>`, `<TYPE_ID_FEATURE>` | The org's GitHub Issue type IDs. Query them per Step 4a below — or strip the subsection if unavailable. |
+| `<strategic-field>` | From Step 3 — `Tier` (single-repo) or `Initiative` (multi-repo). Multiple occurrences across the lifecycle row, "Cross-repo Project contract" section, and the report-back template. |
+| `<configured-issue-types>` | The comma-separated set of org issue type names (e.g. `Bug, Feature, Task`). Resolve via Step 4a below — or strip type-related clauses entirely if the org has none configured. |
 | `<deploy-flow>` | From Step 2 question 8, sub-q 1. |
 | `<local-deploy-command>` | From Step 2 question 8, sub-q 2. If the user said there's no canonical command, drop the entire "Canonical local dev/deploy command" paragraph rather than leaving a placeholder. |
 | `<hands-off-file-1>`, `<hands-off-file-2>`, … | From Step 2 question 8, sub-q 3. Add or remove bullet rows to match the user's actual list. If zero files, drop both bullets and the surrounding paragraph. |
 
-**If the user had no answers to any sub-question of Step 2 question 8**, strip the entire `## Infrastructure boundaries` section (heading through the trailing `---`). Half-filled placeholders are worse than no section.
+**Conditional sections — strip per project shape:**
+
+- **If `<project-scope>` = `single-repo`**, strip the entire `## Cross-repo Project contract` section (heading through trailing `---`). It's a multi-repo concept; including it on a single-repo project just adds noise.
+- **If the user had no answers to any sub-question of Step 2 question 8**, strip the entire `## Infrastructure boundaries` section. Half-filled placeholders are worse than no section.
+- **If the org has no GitHub issue types configured** (Step 4a returns no types), strip the entire `### Setting Issue type` subsection **and** strip the bolded "*then immediately set the GitHub issue type…*" clause from the lifecycle table's filing row (leave the rest of the row intact).
 
 **Do not substitute** the example branch names (`feat/4-zitadel-auth`, `fix/22-rate-limit`, etc.) — they are illustrative of the *shape* of the convention, not project-specific. Leave them.
 
 Write the file. Then `mkdir -p .claude/rules/` first if needed (it usually already exists from `github-project-setup`).
 
-### Step 4a — Resolve GitHub Issue type IDs (or strip the subsection)
+### Step 4a — Discover the org's configured GitHub issue types
 
-GitHub Issue types are an **org-level** feature, configured in **Org Settings → Repository policies → Issue types**. The template's "Setting Issue type" subsection caches the org's IDs so future Claude sessions don't re-query each time. Resolve them now:
+GitHub Issue types are an **org-level** feature, configured in **Org Settings → Repository policies → Issue types**. The template's lifecycle row + "Setting Issue type" subsection use the type names directly via REST PATCH (no node-ID lookup needed). Discover the configured set:
 
 ```bash
-gh api graphql -f query='query { repository(owner: "<owner>", name: "<repo>") { issueTypes(first: 20) { nodes { id name } } } }' \
-  --jq '.data.repository.issueTypes.nodes[] | "\(.name)\t\(.id)"'
+gh api orgs/<owner>/issue-types --jq '[.[].name] | join(", ")'
 ```
 
 Three outcomes:
 
-1. **`Task`, `Bug`, `Feature` returned** (the GitHub defaults): substitute each ID into the corresponding `<TYPE_ID_*>` placeholder. Done.
-2. **No nodes returned**: Issue types aren't enabled for this org, **or** the repo is user-owned (personal repos don't get this feature). Strip the entire `### Setting Issue type` subsection from the template before writing, **and** strip the parenthetical "(see 'Setting Issue type' below)" from the lifecycle table's create row — leave that row as it was originally. Tell the user: *"GitHub Issue types unavailable for `<owner>` — skipped that subsection. Enable in Org Settings → Repository policies → Issue types if you want it later."*
-3. **Different type names** (e.g., the org renamed `Feature` to `Story`): surface the actual type names to the user and ask: *"Map `bug`/`feature` labels to which of `<actual names>`? Or strip the subsection?"* Don't silently rename.
+1. **Names returned** (e.g. `Bug, Feature, Task` — the GitHub defaults): substitute the comma-separated list into `<configured-issue-types>`. Done.
+2. **403 "resource not accessible by personal access token"**: fine-grained PATs commonly lack org admin scope for list endpoints while still allowing per-issue reads. **Fall back to sampling existing issues**:
+
+   ```bash
+   gh issue list -R <owner>/<repo> --limit 5 --json number --jq '.[].number' \
+     | xargs -I{} gh api repos/<owner>/<repo>/issues/{} --jq '.type.name' \
+     | sort -u | grep -v null
+   ```
+
+   If the sample returns concrete type names, treat it as outcome 1 (substitute and proceed). If everything is `null`, treat it as outcome 3.
+
+3. **Empty / all null**: types aren't enabled for this org, **or** the repo is user-owned (personal repos don't get this feature). Strip the type-related clauses per the conditional rule in Step 4's substitution table. Tell the user: *"GitHub Issue types unavailable for `<owner>` — skipped the `Setting Issue type` subsection and the related clause in the lifecycle table. Enable in Org Settings → Repository policies → Issue types if you want it later."*
+
+If the org uses non-standard type names (e.g. renamed `Feature` to `Story`), the substituted `<configured-issue-types>` will reflect the actual set — no manual mapping needed because the template's PATCH command uses names verbatim, not labels.
 
 ---
 
