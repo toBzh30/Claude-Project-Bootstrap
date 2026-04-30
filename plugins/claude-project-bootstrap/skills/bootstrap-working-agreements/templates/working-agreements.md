@@ -238,6 +238,26 @@ Concrete examples of when to push back:
 
 ---
 
+## Infrastructure boundaries
+
+Project-specific constraints around shipping and protected files. These override Claude's default implementation behaviour — the point is to stop "helpful" reformatting of infra files or inventing a local deploy command when the project already has a canonical one.
+
+**How changes ship:** <deploy-flow>
+*(e.g. "merges to `main` trigger the CI/CD pipeline — don't ssh anywhere or run a deploy locally")*
+
+**Canonical local dev/deploy command:** `<local-deploy-command>`
+Use this exact command — don't substitute `docker compose up`, `npm start`, or similar improvised invocations. If you think a different command is needed for a specific task, surface it before running.
+
+**Hands-off files** — don't edit, overwrite, or auto-format without explicit request:
+- `<hands-off-file-1>`
+- `<hands-off-file-2>`
+
+These are typically files where a "small cleanup" can break a pipeline nobody's watching locally — `docker-compose.yml`, deploy scripts, CI workflow YAML, IaC manifests.
+
+If a task appears to require violating any of these, surface the conflict before acting (per "Push back, don't smuggle" above).
+
+---
+
 ## Token efficiency
 
 Habits to apply by default — but **break them the moment they conflict with correctness or you start thrashing**. If a narrow read makes debugging harder because you keep needing more context, widen the read. If filtering a log line hides the actual error, dump more of it. If you're guessing because you starved yourself of context, you've optimised for the wrong thing — re-reads are cheap, wrong fixes are expensive.
