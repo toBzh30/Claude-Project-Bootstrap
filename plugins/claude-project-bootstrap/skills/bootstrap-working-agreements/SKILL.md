@@ -78,6 +78,11 @@ Ask all of these in a single prompt — do not drip-feed. Concrete defaults in b
 5. **Two large files** where narrow reads pay off most. *Prompt: "Name 1–2 files where you'd usually want me to use offset/limit instead of reading the whole thing — these become concrete anchors in the token-efficiency rule."* Without these, the rule reads as fluff.
 6. **Milestones?** *"Do you want milestone-based release planning (Alpha / Beta / GA pattern), or continuous-flow shipping?"* If yes, ask for milestone names + a one-line bar each. (This drives Step 4.)
 7. **Existing planning doc to migrate?** *"Is there a TODO.md / deferred.md / ROADMAP.md to convert to issues, or should I start with an empty board?"*
+8. **Any deploy or hands-off-files constraints worth capturing now?** *Default: no — drop the section, the user can add it later by editing `working-agreements.md` once CI/deploy conventions emerge.* Only if yes, drill into:
+   - *How do changes ship?* (e.g. "CI/CD on merge to main", "manual deploy script")
+   - *Canonical local dev/deploy command?* (e.g. `./run.sh`, `docker compose up` — *the one* the team standardises on, so Claude doesn't improvise alternatives)
+   - *Files Claude must not edit or overwrite without explicit ask?* (e.g. `docker-compose.yml`, `.github/workflows/*.yml`, `terraform/*.tf` — files where a "helpful cleanup" would break CI or production)
+   If the user defaults past this question, the entire "Infrastructure boundaries" section is dropped from the template — don't write it with `TBD`s.
 
 Echo the answers back as a single confirmation table before proceeding.
 
@@ -110,6 +115,11 @@ Read the bundled `templates/working-agreements.md`. Substitute these placeholder
 | `<example-large-file-1>` and `<example-large-file-2>` | The two file names from Step 2 question 5. If the user named only one, drop the second from the bullet so it doesn't read as a placeholder. |
 | `<owner>` | The repo's owner from Step 1's `gh repo view`. Used in cross-repo refs and in the "Setting Issue type" subsection. |
 | `<TYPE_ID_TASK>`, `<TYPE_ID_BUG>`, `<TYPE_ID_FEATURE>` | The org's GitHub Issue type IDs. Query them per Step 4a below — or strip the subsection if unavailable. |
+| `<deploy-flow>` | From Step 2 question 8, sub-q 1. |
+| `<local-deploy-command>` | From Step 2 question 8, sub-q 2. If the user said there's no canonical command, drop the entire "Canonical local dev/deploy command" paragraph rather than leaving a placeholder. |
+| `<hands-off-file-1>`, `<hands-off-file-2>`, … | From Step 2 question 8, sub-q 3. Add or remove bullet rows to match the user's actual list. If zero files, drop both bullets and the surrounding paragraph. |
+
+**If the user had no answers to any sub-question of Step 2 question 8**, strip the entire `## Infrastructure boundaries` section (heading through the trailing `---`). Half-filled placeholders are worse than no section.
 
 **Do not substitute** the example branch names (`feat/4-zitadel-auth`, `fix/22-rate-limit`, etc.) — they are illustrative of the *shape* of the convention, not project-specific. Leave them.
 
