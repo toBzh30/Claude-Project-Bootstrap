@@ -16,11 +16,11 @@ Three skills, individually invocable:
 
 ```bash
 # In any Claude Code session:
-/plugin marketplace add <owner>/Claude-Project-Bootstrap
+/plugin marketplace add toBzh30/Claude-Project-Bootstrap
 /plugin install claude-project-bootstrap
 ```
 
-Replace `<owner>` with the GitHub user or org that hosts your copy of this repo. If the host is private, only collaborators with read access can install it.
+If you've forked this repo, replace `toBzh30` with your own GitHub user or org. If the host is private, only collaborators with read access can install it.
 
 ## Usage in a fresh repo
 
@@ -67,3 +67,13 @@ Repos bootstrapped on older versions of this plugin won't retroactively pick up 
      gh api -X PATCH repos/<owner>/<repo>/issues/$n -f type=<type-name>
    done
    ```
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md). The contribution contract is the bundled working-agreements template.
+
+## License
+
+Licensed under the [MIT License](LICENSE).
+
+This is an independent community project, not affiliated with or endorsed by Anthropic. "Claude" is a trademark of Anthropic, PBC.
