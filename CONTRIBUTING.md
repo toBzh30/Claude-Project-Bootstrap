@@ -2,7 +2,7 @@
 
 Thanks for considering a contribution.
 
-This repo follows the working-agreements bundled with the plugin itself: [`plugins/claude-project-bootstrap/skills/bootstrap-working-agreements/templates/working-agreements.md`](plugins/claude-project-bootstrap/skills/bootstrap-working-agreements/templates/working-agreements.md).
+This repo follows [`.claude/rules/working-agreements.md`](.claude/rules/working-agreements.md).
 
 That document is the contract. Highlights:
 
@@ -12,4 +12,4 @@ That document is the contract. Highlights:
 - **Branch naming**: `feat/<issue#>-short-slug`, `fix/<issue#>-…`, etc.
 - **PR description** links the issue (`Closes #N`) and notes anything reviewer-relevant that isn't obvious from the diff.
 
-If you're filing an issue, the templates under `.github/ISSUE_TEMPLATE/` cover bug, feature, and task — pick the closest fit.
+If you're filing an issue, the templates under `.github/ISSUE_TEMPLATE/` cover bug and feature — pick the closest fit.
