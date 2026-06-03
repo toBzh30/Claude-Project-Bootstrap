@@ -1,6 +1,12 @@
 # claude-project-bootstrap
 
-A Claude Code plugin: lay down the working-agreements + GitHub Project + `CLAUDE.md` hub-and-spokes setup on a new repo, in one command.
+Work with Claude on a complex project the way you'd work with a great collaborator: shared context that persists across sessions, machines, and the natural limits of any single conversation. What you've already figured out doesn't need to be re-explained.
+
+The foundation is a GitHub Project board Claude keeps current as you work — decisions recorded, deferred work visible, in-flight issues tracked. Claude files the issues and updates the board. You just pick what to work on next. No PM overhead, no `CLAUDE.md` that grows until it breaks.
+
+And because it's GitHub, the whole team benefits. Anyone contributing to the repo sees the same board — what's in flight, what's been decided, what's parked. Claude working with one teammate doesn't create a private context that others are locked out of.
+
+This plugin bootstraps that setup on any repo in one command.
 
 ## What's in it
 
@@ -22,7 +28,9 @@ Three skills, individually invocable:
 
 If you've forked this repo, replace `toBzh30` with your own GitHub user or org. If the host is private, only collaborators with read access can install it.
 
-## Usage in a fresh repo
+## Usage
+
+**Fresh repo:**
 
 ```bash
 cd <new-repo>
@@ -30,6 +38,10 @@ cd <new-repo>
 ```
 
 The skill prompts for the bits it can't infer (project name, integration branch, milestones), confirms before creating issues / fields / files, and leaves you with a working setup in one pass.
+
+**Existing repo:**
+
+Run the same command. The skill detects existing `.claude/rules/` files, a pre-existing GitHub Project, and any current issue templates — and prompts before touching anything. You can refresh templates while keeping local decisions, add fields to an existing board, or skip steps you've already done.
 
 ## Forking
 
@@ -51,22 +63,6 @@ Edit files in this repo, push to GitHub, then in any Claude Code session:
 /plugin marketplace update claude-project-bootstrap
 /plugin install claude-project-bootstrap  # picks up the new version
 ```
-
-## Migration — repos bootstrapped before recent template changes
-
-Repos bootstrapped on older versions of this plugin won't retroactively pick up later template improvements (typed issue templates, new working-agreements sections, gitignore carve-outs, etc.). Two options after a plugin update lands:
-
-1. **Re-run `bootstrap-working-agreements`** in the affected repo. The skill detects existing `.claude/rules/` files and prompts before overwriting — pick "refresh templates only" to update content while keeping decisions/local additions.
-2. **One-shot type backfill for past untyped issues** (only relevant if the org has GitHub issue types and earlier issues were filed without them):
-
-   ```bash
-   for n in $(gh issue list -R <owner>/<repo> --json number,title -L 100 \
-              --jq '.[] | select(.type==null) | .number'); do
-     # title prefix → type mapping per org convention
-     # e.g. [bug] → Bug, [feature] → Feature, otherwise → Task
-     gh api -X PATCH repos/<owner>/<repo>/issues/$n -f type=<type-name>
-   done
-   ```
 
 ## Contributing
 
