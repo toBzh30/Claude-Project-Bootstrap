@@ -52,9 +52,10 @@ When ambiguous, ask. **Default-yes for discrete intent; default-no for housekeep
   - `refactor/15-db-schema-split` (or `tech-debt/15-…`)
 - PR title mirrors the issue title.
 - PR body **always includes `Closes #N`** so merge auto-closes the issue and the project's *"Item closed → Status: Done"* workflow fires.
+  - **`Closes #N` in PR bodies only.** In issue bodies and commit messages use `References #N` instead — GitHub renders it as a link and shows the cross-reference in the issue timeline, but never auto-closes. Using `Closes` outside a PR body can fire unexpectedly and close issues you didn't intend to close.
   - **Gotcha:** `Closes` only auto-fires on merges into the **default branch** (`main`). PRs merging into other branches *don't* auto-close. After merging such a PR, manually `gh issue close <N>` and flip the project Status to Done.
 
-**Trivia** → direct commits to `main`. No branch, no PR, no issue. Each commit is one logical change with a future-readable message. Push immediately.
+**Trivia** → direct commits to `main`. No branch, no PR, no issue. Each commit is one logical change with a future-readable message. Push immediately. Direct commits are allowed for single-line fixes, typos, and config tweaks.
 
 **Multi-machine sequencing**: each machine works on its own feature branch; only merges to `main` need to sequence across machines. This is the structural fix for multi-machine divergence.
 
@@ -62,9 +63,11 @@ When ambiguous, ask. **Default-yes for discrete intent; default-no for housekeep
 
 ## Commits and merging
 
+**Mode: Solo — Claude squash-merges automatically. Direct commits to `main` allowed for trivia.**
+
 **Principle:** commit granularity should match what survives the merge.
 
-- **Squash-merge (default).** Branch commits are scratchpad — collapsed at merge. Commit as often as helps you; the PR title/body becomes the one merged commit on `main`. Use for: single-concern PRs. **Most PRs.**
+- **Squash-merge.** Branch commits are scratchpad — collapsed at merge. Commit as often as helps you; the PR title/body becomes the one merged commit on `main`. Best for single-concern PRs.
 - **Regular merge / rebase-merge.** Branch commits become permanent `main` history. Each must be one logical change with a future-readable message; clean review-iteration noise via interactive rebase before merging. Use for: branches whose intermediate commits each say something a future reader or `git bisect` needs.
 
 **Local commit habit:** commit at every meaningful waypoint on the branch. With squash-merge there's no cost — commits collapse anyway.
@@ -83,7 +86,7 @@ When ambiguous, ask. **Default-yes for discrete intent; default-no for housekeep
 | Hit a blocker | Set Status → Blocked, `gh issue comment N -b "blocked on: <one-line reason>"` |
 | Out-of-scope item surfaces mid-PR | Push back, propose a new issue, `gh issue create …`, keep current PR focused |
 | Decision worth logging surfaces | Add an entry to `.claude/rules/decisions.md` per the format in "When to log a decision" |
-| Shipping | PR body ends with `Closes #N`, `gh pr merge <PR> --squash` (or `--merge` for larger feature branches); if target ≠ default branch, follow up with `gh issue close N` and flip Status to Done manually |
+| Shipping | PR body ends with `Closes #N`, `gh pr merge <PR> --squash`; if target ≠ default branch, follow up with `gh issue close N` and flip Status to Done manually |
 | Stale items in Todo for weeks | Surface for user: *"#N has been Todo since <date> — still relevant or close as wontfix?"* — user makes the call, never auto-close |
 
 ---

@@ -53,9 +53,10 @@ When ambiguous, ask. **Default-yes for discrete intent; default-no for housekeep
   - `refactor/15-db-schema-split` (or `tech-debt/15-…`)
 - PR title mirrors the issue title.
 - PR body **always includes `Closes #N`** so merge auto-closes the issue and the project's *"Item closed → Status: Done"* workflow fires.
+  - **`Closes #N` in PR bodies only.** In issue bodies and commit messages use `References #N` instead — GitHub renders it as a link and shows the cross-reference in the issue timeline, but never auto-closes. Using `Closes` outside a PR body can fire unexpectedly and close issues you didn't intend to close.
   - **Gotcha:** `Closes` only auto-fires on merges into the **default branch** (typically `main`). PRs merging into integration branches like `<integration-branch>` *don't* auto-close. After merging such a PR, manually `gh issue close <N>` and flip the project Status to Done. Keep the `Closes` line in the body anyway — it auto-fires later when the integration branch eventually merges to main.
 
-**Trivia** → direct commits to the working branch (`<integration-branch>`). No branch, no PR, no issue. Direct-to-`<integration-branch>` is effectively regular-merge — the commits *are* the history — so each commit is one logical change with a future-readable message. Push immediately.
+<trivia-rule>
 
 **Multi-machine sequencing**: each machine works on its own feature branch; only merges to `<integration-branch>` need to sequence across machines. This is the structural fix for multi-machine divergence.
 
@@ -63,9 +64,11 @@ When ambiguous, ask. **Default-yes for discrete intent; default-no for housekeep
 
 ## Commits and merging
 
+<mode-line>
+
 **Principle:** commit granularity should match what survives the merge.
 
-- **Squash-merge (default).** Branch commits are scratchpad — collapsed at merge. Commit as often as helps you (safety waypoints, "checkpoint before risky refactor"); the PR title/body becomes the one merged commit on `<integration-branch>`. Use for: single-concern PRs where the merged commit is the only useful unit of history. **Most PRs.**
+- **Squash-merge.** Branch commits are scratchpad — collapsed at merge. Commit as often as helps you (safety waypoints, "checkpoint before risky refactor"); the PR title/body becomes the one merged commit on `<integration-branch>`. Best for single-concern PRs where the merged commit is the only useful unit of history.
 - **Regular merge / rebase-merge.** Branch commits become permanent `<integration-branch>` history. Each must be one logical change with a future-readable message; clean review-iteration noise via interactive rebase before merging. Use for: branches whose intermediate commits each say something a future reader or `git bisect` needs — typically multi-concern work (e.g. feature + tangentially-related fix) or refactors whose phases warrant their own `git blame`-able messages.
 
 **Multi-contributor projects:** lean harder on regular-merge with curated commits — `git blame` and `git bisect` resolution across years of history matters more when many people touch the same code. **Single-maintainer projects:** squash is almost always right.
@@ -86,7 +89,7 @@ When ambiguous, ask. **Default-yes for discrete intent; default-no for housekeep
 | Hit a blocker | Set Status → Blocked, `gh issue comment N -b "blocked on: <one-line reason>"` |
 | Out-of-scope item surfaces mid-PR | Push back, propose a new issue, `gh issue create …`, keep current PR focused |
 | Decision worth logging surfaces (rule with non-obvious why, multi-week debate ends, pivot, rejected path, invisible constraint) | Add an entry to `.claude/rules/decisions.md` per the format in "When to log a decision" |
-| Shipping | PR body ends with `Closes #N`, `gh pr merge <PR> --squash` (or `--merge` for larger feature branches); if target ≠ default branch, follow up with `gh issue close N` and flip Status to Done manually |
+| Shipping | <shipping-row> |
 | Stale items in Todo for weeks | Surface for user: *"#N has been Todo since <date> — still relevant or close as wontfix?"* — user makes the call, never auto-close |
 
 ### Setting Issue type
