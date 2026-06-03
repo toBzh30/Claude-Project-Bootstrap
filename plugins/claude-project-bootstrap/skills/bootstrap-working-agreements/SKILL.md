@@ -106,57 +106,79 @@ If `.claude/rules/working-agreements.md` already exists, **do not overwrite**. A
 Ask questions one at a time, in order. Each question should include a suggested default and brief context so the user understands why it matters — they confirm or adjust, rather than thinking from scratch. Capture all answers, then **echo back a single confirmation table before proceeding to Step 3**. Do not write any files until the user confirms.
 
 **Q1 — Project name**
-Suggest the repo name from `gh repo view` as the default. Used in the Project board title, working-agreements headings, and root `CLAUDE.md`.
+Say: *"What should we call this project? This will be the title of the GitHub Project board we're about to create — a shared board where you and I will track features, bugs, and decisions across sessions. Default: `<repo-name>`."*
+
+If the user hasn't heard of GitHub Projects before, add: *"Think of it as a lightweight issue tracker built into GitHub. Once set up, I'll use it to record what we've decided, what's deferred, and what's in flight — so nothing gets lost between sessions or machines."*
 
 **Q2 — What this project is**
-Ask explicitly: *"One paragraph — who uses it, what shape it takes (web app / CLI / library / service), and the key constraint future-Claude needs to know on turn 1?"* This goes into root `CLAUDE.md` and sets context for every future session. A vague answer here means vague context forever.
+Say: *"Give me one paragraph describing what this project is — who uses it, what shape it takes (web app / CLI / library / service), and the most important constraint I should know about on turn 1. I'll use this to get up to speed at the start of every future session, so the more specific you are, the less you'll have to re-explain."*
 
-**Q3 — Integration branch**
-Default: the repo's default branch from preflight. If the user says they'll work on a longer-lived integration branch (e.g. `consumer/v1`), capture that — it appears in the `Closes`-keyword gotcha and the lifecycle table.
+A vague answer here produces vague context in every future session. If the user gives a one-liner, gently ask for more.
 
-**Q4 — Subdirectories that need their own CLAUDE.md spoke**
-Show the top-level directory list from preflight (minus build artefacts). Ask: *"Which of these deserve their own CLAUDE.md? Subdirs with their own conventions or gotchas — not just code organisation."* If the repo is flat or the user says none, skip Step 6 entirely.
+**Q3 — Main working branch**
+Say: *"What branch does finished work land on? This is usually `main` or `develop` — the branch you merge pull requests into. Default: `<default-branch>`."*
 
-**Q5 — Large files where narrow reads pay off**
-Ask: *"Name 1–2 files where you'd usually want me to use offset/limit instead of reading the whole thing."* These become concrete anchors in the token-efficiency rule. If the user says none or the repo has no large files yet, drop the bullet entirely rather than leaving a placeholder.
+If the user asks why it matters: *"I use this to know where to target pull requests, and to handle the edge case where GitHub's auto-close keyword only fires on merges into this branch."*
 
-**Q6 — Milestone-based or continuous-flow?**
-Ask: *"Do you want milestone-based release planning (Alpha / Beta / GA pattern), or continuous-flow shipping?"* If milestones: ask for names + a one-line bar each. This drives whether Step 3 creates milestones and whether `.claude/rules/roadmap.md` is written.
+Capture as `<integration-branch>`. If the user names a branch other than the repo's default, note it explicitly — it will appear throughout the working agreements.
 
-**Q7 — Existing planning doc to migrate?**
-Ask: *"Is there a TODO.md / deferred.md / ROADMAP.md to convert to issues, or should we start with an empty board?"* If yes, capture the path — passed to `github-project-setup` in Step 3.
+**Q4 — Subdirectories that need their own context file**
+Show the top-level directory list (minus build artefacts). Say: *"Claude automatically loads a `CLAUDE.md` file from whichever directory you're working in. This lets different parts of the codebase have their own conventions without cluttering the root. Of these directories — `<list>` — which have their own patterns, gotchas, or constraints worth capturing separately? It's fine to say none."*
 
-**Q8 — Deploy and hands-off-files constraints**
-Default: no — the user can add this later once CI/deploy conventions emerge. If yes, ask three sub-questions in sequence:
-- *How do changes ship?* (e.g. "CI/CD on merge to main", "manual deploy script")
-- *Canonical local dev/deploy command?* (e.g. `./run.sh`, `docker compose up`)
-- *Files Claude must not edit without explicit ask?* (e.g. `docker-compose.yml`, `.github/workflows/*.yml`, `terraform/*.tf`)
+If the repo is flat or the user says none, skip Step 6 entirely. Don't force the pattern onto a repo that doesn't need it.
 
-If the user skips this question, drop the entire "Infrastructure boundaries" section from the template — don't write it with `TBD`s.
+**Q5 — Any unusually large files?**
+Say: *"Are there any files in this repo that are very long — hundreds or thousands of lines — where I should read only the relevant section rather than the whole thing? If so, name 1–2. If not, just say no."*
 
-**Q9 — Solo or team?**
-Ask: *"Will Claude be working solo or alongside a team on this repo?"* Explain the implication briefly:
-- **Solo** — Claude commits, pushes, and merges automatically after proposing.
-- **Team** — Claude opens PRs and stops; humans review and merge.
+If the user names files, these become concrete examples in the token-efficiency guidelines. If they say no or the repo has no large files yet, drop the bullet entirely rather than leaving a placeholder.
 
-Default: solo for single-maintainer repos, team if the repo already has multiple contributors (visible from `git log --format='%ae' | sort -u`).
+**Q6 — Release planning style**
+Say: *"How do you ship? Two options:*
+- *Milestone-based — you plan discrete releases (Alpha, Beta, GA or similar). I'll create GitHub milestones, a roadmap file, and tracking issues that show what needs to land before each release.*
+- *Continuous flow — you ship whenever something is ready, no fixed release boundaries. Simpler board, no milestone overhead.*
+
+*Which fits how you work?"*
+
+If milestones: ask for names + a one-line description of what "done" means for each. This drives whether Step 3 creates milestones and whether `.claude/rules/roadmap.md` is written.
+
+**Q7 — Any existing to-do list to import?**
+Say: *"Do you have an existing list of planned work — a TODO.md, ROADMAP.md, deferred.md, or similar — that you'd like converted into GitHub issues? If yes, I'll turn each item into a tracked issue on the board. If no, we start with an empty board."*
+
+If yes, capture the file path. If no, move on.
+
+**Q8 — Are there files or commands Claude should never touch?**
+Say: *"Some projects have files that are easy to accidentally break — CI config, deployment scripts, infrastructure definitions. Are there any files I should never edit without you explicitly asking? Also, is there a specific command you use to run or deploy this project locally that I should always use instead of improvising?"*
+
+Default: no — skip this entirely if the user says no or doesn't know yet. They can add it later by editing `working-agreements.md`. If yes, ask:
+- *Which files are off-limits?* (e.g. `docker-compose.yml`, `.github/workflows/*.yml`, `terraform/*.tf`)
+- *What's the canonical run/deploy command?* (e.g. `./run.sh`, `docker compose up`)
+- *How do changes ship to production?* (e.g. "CI/CD on merge to main", "manual deploy")
+
+If the user skips, drop the entire "Infrastructure boundaries" section — don't write it with `TBD`s.
+
+**Q9 — Solo or working with a team?**
+Say: *"Will you be the only one pushing to this repo, or is there a team? This changes how I handle finished work:*
+- *Solo — I commit, push, and merge automatically once we've agreed on an approach. Fast, low overhead.*
+- *Team — I open a pull request and stop. Your teammates review and merge. Nothing lands without a human approving it.*"
+
+Check `git log --format='%ae' | sort -u` — if multiple email addresses exist, suggest team as the default. Otherwise suggest solo.
 
 Capture as `<collaboration-mode>` (`solo` or `team`).
 
-**Q10 — Default merge policy**
-Suggest a default based on `<collaboration-mode>` (squash for solo, ask for team). Explain the three options briefly:
-- **Squash** — branch commits collapse into one on merge; PR title/body is the history. Clean and simple.
-- **Regular merge** — branch commits become permanent history; best when intermediate commits need to be `git bisect`-able.
-- **Rebase** — branch commits replayed onto target; linear history without merge commits.
+**Q10 — How should branches be merged?**
+Say: *"When a pull request is ready to merge, which strategy do you prefer?*
+- *Squash (recommended for most projects) — all the commits from the branch collapse into one clean commit on `<integration-branch>`. Simple history, easy to read.*
+- *Regular merge — each commit from the branch lands individually. Good if the step-by-step history matters for debugging later.*
+- *Rebase — commits are replayed onto `<integration-branch>` one by one, no merge commit. Cleanest-looking history, slightly more complex.*"*
 
-Capture as `<merge-policy>` (`squash`, `regular`, or `rebase`).
+Suggest squash for solo, ask for team. Capture as `<merge-policy>` (`squash`, `regular`, or `rebase`).
 
-**Q11 — Direct commits to `<integration-branch>` for trivia?**
-Ask: *"Should trivial changes (typos, single-line fixes, config tweaks) go directly to `<integration-branch>`, or does everything need a branch and PR?"*
-- **Allowed** — direct commits OK for genuine trivia. Default for solo.
-- **Never** — all changes via branch + PR, no exceptions. Default for team.
+**Q11 — Can small fixes go straight to `<integration-branch>`?**
+Say: *"For tiny changes — a typo fix, a one-line config tweak — should I commit directly to `<integration-branch>`, or does everything go through a branch and pull request?*
+- *Direct commits allowed — fine for genuine trivia, saves overhead on small things.*
+- *Always use a branch — every change goes through a PR, no exceptions. Common when `<integration-branch>` is protected.*"*
 
-Capture as `<direct-to-main>` (`allowed` or `never`).
+Default: allowed for solo, never for team. Capture as `<direct-to-main>` (`allowed` or `never`).
 
 ---
 
