@@ -101,105 +101,90 @@ If `.claude/rules/working-agreements.md` already exists, **do not overwrite**. A
 
 ---
 
-## Step 2 — Gather project-specific values (sequential questions)
+## Step 2 — Infer, propose, confirm
 
-Ask questions one at a time, in order. Each question should include a suggested default and brief context so the user understands why it matters — they confirm or adjust, rather than thinking from scratch. Capture all answers, then **echo back a single confirmation table before proceeding to Step 3**. Do not write any files until the user confirms.
+**Don't interview the user.** Read the repo first, form a view, then present it. The user confirms, adjusts, or redirects — they shouldn't have to answer questions you can answer yourself.
 
-**Q1 — Project name**
-Say: *"What should we call this project? This will be the title of the GitHub Project board we're about to create — a shared board where you and I will track features, bugs, and decisions across sessions. Default: `<repo-name>`."*
+### Step 2a — Read and infer
 
-If the user hasn't heard of GitHub Projects before, add: *"Think of it as a lightweight issue tracker built into GitHub. Once set up, I'll use it to record what we've decided, what's deferred, and what's in flight — so nothing gets lost between sessions or machines."*
+Run in parallel to build a picture of the repo before talking to the user:
 
-**Q2 — What this project is**
-Say: *"Give me one paragraph describing what this project is — who uses it, what shape it takes (web app / CLI / library / service), and the most important constraint I should know about on turn 1. I'll use this to get up to speed at the start of every future session, so the more specific you are, the less you'll have to re-explain."*
+```bash
+gh repo view --json nameWithOwner,defaultBranchRef,description -q '{name: .nameWithOwner, branch: .defaultBranchRef.name, desc: .description}'
+git log --format='%ae' | sort -u          # how many contributors?
+ls -d */ 2>/dev/null | grep -vE '^(node_modules|\.git|__pycache__|\.venv|dist|build)/$'  # subdirs
+find . -name "*.md" -maxdepth 2 | head -10  # planning docs?
+find . -name "*.yml" -path "*/.github/*" | head -5  # CI config present?
+wc -l $(find . -name "*.py" -o -name "*.ts" -o -name "*.tsx" -o -name "*.go" 2>/dev/null | head -20) 2>/dev/null | sort -rn | head -5  # largest files
+```
 
-A vague answer here produces vague context in every future session. If the user gives a one-liner, gently ask for more.
+Use what you find to form a default for every value below:
 
-**Q3 — Main working branch**
-Say: *"What branch does finished work land on? This is usually `main` or `develop` — the branch you merge pull requests into. Default: `<default-branch>`."*
-
-If the user asks why it matters: *"I use this to know where to target pull requests, and to handle the edge case where GitHub's auto-close keyword only fires on merges into this branch."*
-
-Capture as `<integration-branch>`. If the user names a branch other than the repo's default, note it explicitly — it will appear throughout the working agreements.
-
-**Q4 — Subdirectories that need their own context file**
-Show the top-level directory list (minus build artefacts). Say: *"Claude automatically loads a `CLAUDE.md` file from whichever directory you're working in. This lets different parts of the codebase have their own conventions without cluttering the root. Of these directories — `<list>` — which have their own patterns, gotchas, or constraints worth capturing separately? It's fine to say none."*
-
-If the repo is flat or the user says none, skip Step 6 entirely. Don't force the pattern onto a repo that doesn't need it.
-
-**Q5 — Any unusually large files?**
-Say: *"Are there any files in this repo that are very long — hundreds or thousands of lines — where I should read only the relevant section rather than the whole thing? If so, name 1–2. If not, just say no."*
-
-If the user names files, these become concrete examples in the token-efficiency guidelines. If they say no or the repo has no large files yet, drop the bullet entirely rather than leaving a placeholder.
-
-**Q6 — Release planning style**
-Say: *"How do you ship? Two options:*
-- *Milestone-based — you plan discrete releases (Alpha, Beta, GA or similar). I'll create GitHub milestones, a roadmap file, and tracking issues that show what needs to land before each release.*
-- *Continuous flow — you ship whenever something is ready, no fixed release boundaries. Simpler board, no milestone overhead.*
-
-*Which fits how you work?"*
-
-If milestones: ask for names + a one-line description of what "done" means for each. This drives whether Step 3 creates milestones and whether `.claude/rules/roadmap.md` is written.
-
-**Q7 — Any existing to-do list to import?**
-Say: *"Do you have an existing list of planned work — a TODO.md, ROADMAP.md, deferred.md, or similar — that you'd like converted into GitHub issues? If yes, I'll turn each item into a tracked issue on the board. If no, we start with an empty board."*
-
-If yes, capture the file path. If no, move on.
-
-**Q8 — Are there files or commands Claude should never touch?**
-Say: *"Some projects have files that are easy to accidentally break — CI config, deployment scripts, infrastructure definitions. Are there any files I should never edit without you explicitly asking? Also, is there a specific command you use to run or deploy this project locally that I should always use instead of improvising?"*
-
-Default: no — skip this entirely if the user says no or doesn't know yet. They can add it later by editing `working-agreements.md`. If yes, ask:
-- *Which files are off-limits?* (e.g. `docker-compose.yml`, `.github/workflows/*.yml`, `terraform/*.tf`)
-- *What's the canonical run/deploy command?* (e.g. `./run.sh`, `docker compose up`)
-- *How do changes ship to production?* (e.g. "CI/CD on merge to main", "manual deploy")
-
-If the user skips, drop the entire "Infrastructure boundaries" section — don't write it with `TBD`s.
-
-**Q9 — Solo or working with a team?**
-Say: *"Will you be the only one pushing to this repo, or is there a team? This changes how I handle finished work:*
-- *Solo — I commit, push, and merge automatically once we've agreed on an approach. Fast, low overhead.*
-- *Team — I open a pull request and stop. Your teammates review and merge. Nothing lands without a human approving it.*"
-
-Check `git log --format='%ae' | sort -u` — if multiple email addresses exist, suggest team as the default. Otherwise suggest solo.
-
-Capture as `<collaboration-mode>` (`solo` or `team`).
-
-**Q10 — How should branches be merged?**
-Say: *"When a pull request is ready to merge, which strategy do you prefer?*
-- *Squash (recommended for most projects) — all the commits from the branch collapse into one clean commit on `<integration-branch>`. Simple history, easy to read.*
-- *Regular merge — each commit from the branch lands individually. Good if the step-by-step history matters for debugging later.*
-- *Rebase — commits are replayed onto `<integration-branch>` one by one, no merge commit. Cleanest-looking history, slightly more complex.*"*
-
-Suggest squash for solo, ask for team. Capture as `<merge-policy>` (`squash`, `regular`, or `rebase`).
-
-**Q11 — Can small fixes go straight to `<integration-branch>`?**
-Say: *"For tiny changes — a typo fix, a one-line config tweak — should I commit directly to `<integration-branch>`, or does everything go through a branch and pull request?*
-- *Direct commits allowed — fine for genuine trivia, saves overhead on small things.*
-- *Always use a branch — every change goes through a PR, no exceptions. Common when `<integration-branch>` is protected.*"*
-
-Default: allowed for solo, never for team. Capture as `<direct-to-main>` (`allowed` or `never`).
-
----
-
-**Confirmation table** — after all 11 answers, echo back before proceeding:
-
-| Question | Answer |
+| Value | How to infer |
 |---|---|
-| Project name | `<value>` |
-| What it is | `<first sentence of paragraph>` |
-| Integration branch | `<value>` |
-| CLAUDE.md spokes | `<list or "none">` |
-| Large files | `<list or "skipped">` |
-| Milestones | `<list or "continuous-flow">` |
-| Planning doc | `<path or "none">` |
-| Deploy constraints | `<summary or "skipped">` |
-| Mode | `<solo or team>` |
-| Merge policy | `<squash / regular / rebase>` |
-| Direct commits to `<integration-branch>` | `<allowed or never>` |
+| **Project name** | Repo name from `gh repo view` |
+| **Integration branch** | Default branch from `gh repo view` |
+| **Subdirs needing CLAUDE.md** | Top-level dirs with non-trivial code; flat repos → none |
+| **Large files** | Files >300 lines from the `wc -l` scan |
+| **Shipping style** | Single contributor + no milestone docs → continuous flow. Multiple contributors or existing ROADMAP/milestone files → suggest milestone-based |
+| **Planning doc** | Any TODO.md / ROADMAP.md / deferred.md found at root or `.claude/` |
+| **Deploy constraints** | `.github/workflows/` present → likely CI/CD; `docker-compose.yml` or `Makefile` → suggest flagging as hands-off |
+| **Solo vs team** | Single email in `git log` → solo. Multiple → team |
+| **Merge policy** | Solo → squash. Team → ask |
+| **Direct commits** | Solo → allowed. Team → never |
 
-When `<collaboration-mode>` = `team`, add explicitly:
+### Step 2b — Present the proposed setup
+
+Open with a brief characterisation of what you found — one or two sentences, natural, not a bullet list. For example:
+
+> *"This looks like a solo TypeScript CLI — single contributor, no subdirectories, no existing planning docs. Here's what I'd set up:"*
+
+Then show the proposed values as a table:
+
+| Setting | Proposed | Notes |
+|---|---|---|
+| Project name | `<repo-name>` | Title of the GitHub Project board |
+| Main branch | `<default-branch>` | Where PRs merge into |
+| Subdirectory context files | `<list or "none">` | Per-subdir CLAUDE.md files |
+| Large files to read narrowly | `<list or "none">` | Claude reads these with offset/limit |
+| Shipping style | `<continuous flow or milestone-based>` | |
+| Planning doc to import | `<path or "none">` | |
+| Deploy constraints | `<summary or "none">` | |
+| Mode | `<Solo or Team>` | Solo: Claude merges. Team: Claude opens PRs, humans merge |
+| Merge policy | `<squash / regular / rebase>` | |
+| Direct commits to `<branch>` | `<allowed or never>` | |
+
+Add a one-liner explanation of what GitHub Projects is if the repo has no prior issues or project board — the user may not know what they're getting:
+
+> *"GitHub Projects is a built-in board I'll use to track what we've decided, what's deferred, and what's in flight — so context survives across sessions and machines."*
+
+### Step 2c — Ask only what you can't infer
+
+After showing the table, there is exactly **one thing** you cannot infer from the repo: **what this project is in plain English**. Ask for it directly:
+
+> *"The one thing I can't infer: give me a paragraph describing what this project does, who uses it, and the most important constraint I should know on turn 1. This goes into CLAUDE.md and sets context for every future session."*
+
+If the repo has a README, read it first — you may be able to draft the paragraph yourself and ask the user to confirm or refine rather than writing from scratch.
+
+If the user gives a one-liner, gently ask for more — a vague description here means vague context in every future session.
+
+### Step 2d — Handle adjustments
+
+After the user confirms or adjusts the proposed table and provides the project description, resolve any open items:
+
+- **Milestone-based confirmed**: ask for milestone names + one-line "done" bar for each. Keep it to 2–4 milestones.
+- **Deploy constraints flagged**: ask which files are off-limits and what the canonical run command is (two quick follow-ups, not a separate interview).
+- **Team mode**: confirm merge policy explicitly if not already clear — squash is a safe default but some teams have strong preferences.
+
+Capture all final values. Do not proceed to Step 3 until everything in the table is resolved.
+
+### Step 2e — Confirmation
+
+Echo the final table back before writing anything. When `<collaboration-mode>` = `team`, add:
+
 > **Mode: Team** — merge policy: `<merge-policy>`, direct commits to `<integration-branch>`: `<direct-to-main>`, auto-merge: off — Claude opens PRs and stops.
+
+Wait for explicit confirmation before proceeding.
 
 Wait for explicit confirmation before proceeding to Step 3.
 
