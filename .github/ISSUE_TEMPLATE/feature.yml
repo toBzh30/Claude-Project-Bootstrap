@@ -1,0 +1,27 @@
+name: Feature
+description: New capability or product addition
+title: "[feature] "
+labels: ["feature"]
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: One-paragraph description of what this is and why we want it
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope
+      description: What's in scope, what's out of scope. Files / modules likely to change.
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Blockers / dependencies
+      description: Anything else that must land first
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes
+      description: Open questions, design references, links
