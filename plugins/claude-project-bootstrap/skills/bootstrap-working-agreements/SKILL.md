@@ -118,7 +118,28 @@ Ask all of these in a single prompt — do not drip-feed. Concrete defaults in b
    - *Files Claude must not edit or overwrite without explicit ask?* (e.g. `docker-compose.yml`, `.github/workflows/*.yml`, `terraform/*.tf` — files where a "helpful cleanup" would break CI or production)
    If the user defaults past this question, the entire "Infrastructure boundaries" section is dropped from the template — don't write it with `TBD`s.
 
-Echo the answers back as a single confirmation table before proceeding.
+9. **Solo or team?** *"Will Claude be working solo or alongside a team on this repo?"*
+   - **Solo** — Claude commits, pushes, and merges automatically after proposing. *Default for single-maintainer repos.*
+   - **Team** — Claude opens PRs and stops; humans review and merge. *Default when 2+ people push to the repo.*
+
+   Capture as `<collaboration-mode>` (`solo` or `team`).
+
+10. **Default merge policy?** Surface with a recommended default based on `<collaboration-mode>`:
+    - **Squash** — branch commits collapse into one on merge; PR title/body is the history. *Recommended default for solo and most team repos.*
+    - **Regular merge** — branch commits become permanent history; each must be one logical change. Use when intermediate commits need to be `git bisect`-able.
+    - **Rebase** — branch commits are replayed onto the target; linear history without merge commits. Use when the team values a clean linear log.
+
+    Capture as `<merge-policy>` (`squash`, `regular`, or `rebase`).
+
+11. **Direct commits to `<integration-branch>` for trivia?** *Default depends on `<collaboration-mode>`*:
+    - **Allowed** — single-line fixes, typos, config tweaks can go direct. *Default for solo.*
+    - **Never** — all changes go through a branch + PR, regardless of size. *Default for team (protected main).*
+
+    Capture as `<direct-to-main>` (`allowed` or `never`).
+
+Echo the answers back as a single confirmation table before proceeding. When `<collaboration-mode>` = `team`, explicitly surface the three selections together:
+
+> **Mode: Team** — merge policy: `<merge-policy>`, direct commits to `<integration-branch>`: `<direct-to-main>`, auto-merge: off — Claude opens PRs and stops.
 
 ---
 
@@ -153,6 +174,22 @@ Read the bundled `templates/working-agreements.md`. Substitute these placeholder
 | `<deploy-flow>` | From Step 2 question 8, sub-q 1. |
 | `<local-deploy-command>` | From Step 2 question 8, sub-q 2. If the user said there's no canonical command, drop the entire "Canonical local dev/deploy command" paragraph rather than leaving a placeholder. |
 | `<hands-off-file-1>`, `<hands-off-file-2>`, … | From Step 2 question 8, sub-q 3. Add or remove bullet rows to match the user's actual list. If zero files, drop both bullets and the surrounding paragraph. |
+| `<mode-line>` | One-liner at the top of "Commits and merging" reflecting the selected mode. Compose from `<collaboration-mode>`, `<merge-policy>`, and `<direct-to-main>` — see the mode-line table below. |
+| `<shipping-row>` | The lifecycle table's shipping row. Solo: include `gh pr merge` command per `<merge-policy>`. Team: `PR body ends with \`Closes #N\`. Open the PR and stop — do not merge.` |
+| `<trivia-rule>` | The direct-commit paragraph in "Branch and PR strategy". If `<direct-to-main>` = `allowed`: keep the current "Trivia → direct commits" paragraph. If `never`: replace with `All changes go through a branch + PR — no direct commits to \`<integration-branch>\`, regardless of size.` |
+
+**Mode-line compositions:**
+
+| `<collaboration-mode>` | `<merge-policy>` | `<direct-to-main>` | `<mode-line>` |
+|---|---|---|---|
+| solo | squash | allowed | `**Mode: Solo — Claude squash-merges automatically. Direct commits to \`<integration-branch>\` allowed for trivia.**` |
+| solo | regular | allowed | `**Mode: Solo — Claude regular-merges automatically. Direct commits to \`<integration-branch>\` allowed for trivia.**` |
+| solo | rebase | allowed | `**Mode: Solo — Claude rebase-merges automatically. Direct commits to \`<integration-branch>\` allowed for trivia.**` |
+| solo | any | never | Same as above but append: `All changes via PR.` |
+| team | squash | never | `**Mode: Team — Claude opens PRs and stops; humans squash-merge. All changes via PR.**` |
+| team | regular | never | `**Mode: Team — Claude opens PRs and stops; humans regular-merge. All changes via PR.**` |
+| team | rebase | never | `**Mode: Team — Claude opens PRs and stops; humans rebase-merge. All changes via PR.**` |
+| team | any | allowed | Same team line but append: `Direct commits to \`<integration-branch>\` allowed for trivia.` |
 
 **Conditional sections — strip per project shape:**
 

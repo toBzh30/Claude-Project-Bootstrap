@@ -55,13 +55,15 @@ When ambiguous, ask. **Default-yes for discrete intent; default-no for housekeep
 - PR body **always includes `Closes #N`** so merge auto-closes the issue and the project's *"Item closed → Status: Done"* workflow fires.
   - **Gotcha:** `Closes` only auto-fires on merges into the **default branch** (typically `main`). PRs merging into integration branches like `<integration-branch>` *don't* auto-close. After merging such a PR, manually `gh issue close <N>` and flip the project Status to Done. Keep the `Closes` line in the body anyway — it auto-fires later when the integration branch eventually merges to main.
 
-**Trivia** → direct commits to the working branch (`<integration-branch>`). No branch, no PR, no issue. Direct-to-`<integration-branch>` is effectively regular-merge — the commits *are* the history — so each commit is one logical change with a future-readable message. Push immediately.
+<trivia-rule>
 
 **Multi-machine sequencing**: each machine works on its own feature branch; only merges to `<integration-branch>` need to sequence across machines. This is the structural fix for multi-machine divergence.
 
 ---
 
 ## Commits and merging
+
+<mode-line>
 
 **Principle:** commit granularity should match what survives the merge.
 
@@ -86,7 +88,7 @@ When ambiguous, ask. **Default-yes for discrete intent; default-no for housekeep
 | Hit a blocker | Set Status → Blocked, `gh issue comment N -b "blocked on: <one-line reason>"` |
 | Out-of-scope item surfaces mid-PR | Push back, propose a new issue, `gh issue create …`, keep current PR focused |
 | Decision worth logging surfaces (rule with non-obvious why, multi-week debate ends, pivot, rejected path, invisible constraint) | Add an entry to `.claude/rules/decisions.md` per the format in "When to log a decision" |
-| Shipping | PR body ends with `Closes #N`, `gh pr merge <PR> --squash` (or `--merge` for larger feature branches); if target ≠ default branch, follow up with `gh issue close N` and flip Status to Done manually |
+| Shipping | <shipping-row> |
 | Stale items in Todo for weeks | Surface for user: *"#N has been Todo since <date> — still relevant or close as wontfix?"* — user makes the call, never auto-close |
 
 ### Setting Issue type
