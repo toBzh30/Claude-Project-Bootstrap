@@ -52,6 +52,7 @@ When ambiguous, ask. **Default-yes for discrete intent; default-no for housekeep
   - `refactor/15-db-schema-split` (or `tech-debt/15-…`)
 - PR title mirrors the issue title.
 - PR body **always includes `Closes #N`** so merge auto-closes the issue and the project's *"Item closed → Status: Done"* workflow fires.
+  - **`Closes #N` in PR bodies only.** In issue bodies and commit messages use `References #N` instead — GitHub renders it as a link and shows the cross-reference in the issue timeline, but never auto-closes. Using `Closes` outside a PR body can fire unexpectedly and close issues you didn't intend to close.
   - **Gotcha:** `Closes` only auto-fires on merges into the **default branch** (`main`). PRs merging into other branches *don't* auto-close. After merging such a PR, manually `gh issue close <N>` and flip the project Status to Done.
 
 **Trivia** → direct commits to `main`. No branch, no PR, no issue. Each commit is one logical change with a future-readable message. Push immediately. Direct commits are allowed for single-line fixes, typos, and config tweaks.
@@ -66,7 +67,7 @@ When ambiguous, ask. **Default-yes for discrete intent; default-no for housekeep
 
 **Principle:** commit granularity should match what survives the merge.
 
-- **Squash-merge (default).** Branch commits are scratchpad — collapsed at merge. Commit as often as helps you; the PR title/body becomes the one merged commit on `main`. Use for: single-concern PRs. **Most PRs.**
+- **Squash-merge.** Branch commits are scratchpad — collapsed at merge. Commit as often as helps you; the PR title/body becomes the one merged commit on `main`. Best for single-concern PRs.
 - **Regular merge / rebase-merge.** Branch commits become permanent `main` history. Each must be one logical change with a future-readable message; clean review-iteration noise via interactive rebase before merging. Use for: branches whose intermediate commits each say something a future reader or `git bisect` needs.
 
 **Local commit habit:** commit at every meaningful waypoint on the branch. With squash-merge there's no cost — commits collapse anyway.

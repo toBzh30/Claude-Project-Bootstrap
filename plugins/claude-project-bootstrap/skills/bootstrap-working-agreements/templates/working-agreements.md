@@ -53,6 +53,7 @@ When ambiguous, ask. **Default-yes for discrete intent; default-no for housekeep
   - `refactor/15-db-schema-split` (or `tech-debt/15-…`)
 - PR title mirrors the issue title.
 - PR body **always includes `Closes #N`** so merge auto-closes the issue and the project's *"Item closed → Status: Done"* workflow fires.
+  - **`Closes #N` in PR bodies only.** In issue bodies and commit messages use `References #N` instead — GitHub renders it as a link and shows the cross-reference in the issue timeline, but never auto-closes. Using `Closes` outside a PR body can fire unexpectedly and close issues you didn't intend to close.
   - **Gotcha:** `Closes` only auto-fires on merges into the **default branch** (typically `main`). PRs merging into integration branches like `<integration-branch>` *don't* auto-close. After merging such a PR, manually `gh issue close <N>` and flip the project Status to Done. Keep the `Closes` line in the body anyway — it auto-fires later when the integration branch eventually merges to main.
 
 <trivia-rule>
@@ -67,7 +68,7 @@ When ambiguous, ask. **Default-yes for discrete intent; default-no for housekeep
 
 **Principle:** commit granularity should match what survives the merge.
 
-- **Squash-merge (default).** Branch commits are scratchpad — collapsed at merge. Commit as often as helps you (safety waypoints, "checkpoint before risky refactor"); the PR title/body becomes the one merged commit on `<integration-branch>`. Use for: single-concern PRs where the merged commit is the only useful unit of history. **Most PRs.**
+- **Squash-merge.** Branch commits are scratchpad — collapsed at merge. Commit as often as helps you (safety waypoints, "checkpoint before risky refactor"); the PR title/body becomes the one merged commit on `<integration-branch>`. Best for single-concern PRs where the merged commit is the only useful unit of history.
 - **Regular merge / rebase-merge.** Branch commits become permanent `<integration-branch>` history. Each must be one logical change with a future-readable message; clean review-iteration noise via interactive rebase before merging. Use for: branches whose intermediate commits each say something a future reader or `git bisect` needs — typically multi-concern work (e.g. feature + tangentially-related fix) or refactors whose phases warrant their own `git blame`-able messages.
 
 **Multi-contributor projects:** lean harder on regular-merge with curated commits — `git blame` and `git bisect` resolution across years of history matters more when many people touch the same code. **Single-maintainer projects:** squash is almost always right.
