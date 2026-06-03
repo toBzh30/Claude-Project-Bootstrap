@@ -1,0 +1,33 @@
+name: Bug
+description: Something isn't working as expected
+title: "[bug] "
+labels: ["bug"]
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: What's broken
+      description: One-line summary plus context
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1.
+        2.
+        3.
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected vs actual
+  - type: textarea
+    id: env
+    attributes:
+      label: Environment
+      description: Branch, machine, browser, anything relevant
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes / logs
