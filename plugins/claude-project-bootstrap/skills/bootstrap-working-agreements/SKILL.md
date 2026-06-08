@@ -115,6 +115,7 @@ git log --format='%ae' | sort -u          # how many contributors?
 ls -d */ 2>/dev/null | grep -vE '^(node_modules|\.git|__pycache__|\.venv|dist|build)/$'  # subdirs
 find . -name "*.md" -maxdepth 2 | head -10  # planning docs?
 find . -name "*.yml" -path "*/.github/*" | head -5  # CI config present?
+find . -maxdepth 2 \( -name "*.yml" -o -name "*.yaml" -o -name "Makefile" -o -name "Dockerfile*" \) -not -path "*/.github/*" -not -path "*/node_modules/*" 2>/dev/null | head -10  # infra/config files?
 wc -l $(find . -name "*.py" -o -name "*.ts" -o -name "*.tsx" -o -name "*.go" 2>/dev/null | head -20) 2>/dev/null | sort -rn | head -5  # largest files
 ```
 
@@ -128,8 +129,8 @@ Use what you find to form a default for every value below:
 | **Large files** | Files >300 lines from the `wc -l` scan |
 | **Shipping style** | Single contributor + no milestone docs → continuous flow. Multiple contributors or existing ROADMAP/milestone files → suggest milestone-based |
 | **Planning doc** | Any TODO.md / ROADMAP.md / deferred.md found at root or `.claude/` |
-| **Deploy constraints** | `.github/workflows/` present → likely CI/CD; `docker-compose.yml` or `Makefile` → suggest flagging as hands-off |
-| **Solo vs team** | Single email in `git log` → solo. Multiple → team |
+| **Hands-off files** | Any infra/config files found by the scan (docker-compose, Makefile, Dockerfile, etc.) — surface for the user to confirm, don't assume |
+| **Solo vs team** | Single email in `git log` → solo. Multiple emails or CI present → lean team |
 | **Merge policy** | Solo → squash. Team → ask |
 | **Direct commits** | Solo → allowed. Team → never |
 
@@ -137,14 +138,14 @@ Use what you find to form a default for every value below:
 
 Open with one or two sentences describing what you found — natural, not a bullet list:
 
-> *"This looks like a solo Python API — two contributors in git history but CI is set up and there's a docker-compose.yml, so I'd treat it as a team repo. Here's what I'm thinking — let me walk through each item:"*
+> *"This looks like a Python API — two contributors in git history and CI is set up, so I'd treat it as a team repo. Here's what I'm thinking — let me walk through each item:"*
 
 Then **go through each proposed value conversationally, one or two at a time where they're naturally grouped**. Don't dump a table and ask for a single yes/no. For each item, state what you'd propose and why, and wait for the user to confirm or adjust before moving on.
 
 Natural groupings:
 
 1. **Project name + what it is** — name first (fast confirm), then ask for the project description since you can't infer it:
-   > *"Project name: `acme-api` — sound right?"* → confirm → *"Now the one thing I can't infer: give me a paragraph describing what this does, who uses it, and the most important constraint I should know on turn 1."*
+   > *"Project name: `acme-api` — sound right?"* → confirm → *"Now the one thing I can't infer: give me a paragraph describing what this does, who uses it, and the most important constraint I should know going in."*
    If the repo has a README, draft the paragraph from it and ask the user to confirm or refine.
 
 2. **Main branch** — usually a quick confirm:
@@ -164,8 +165,9 @@ Natural groupings:
 6. **Planning doc** — only raise if one exists:
    > *"There's a TODO.md with 3 items — want me to convert those into GitHub issues on the board?"*
 
-7. **Deploy constraints** — only raise if CI or infra files detected:
-   > *"I see `.github/workflows/ci.yml` and `docker-compose.yml` — should I treat those as hands-off (never edit without you asking)? And is there a canonical command to run this locally?"*
+7. **Hands-off files** — name any infra/config files found by the scan; if none found, ask generically:
+   > *"I see `docker-compose.yml` and `Makefile` — are any of these hands-off (only edit when you explicitly ask)? Anything else in the repo I should treat that way?"*
+   If no infra files found: *"Are there any files or directories I should treat as hands-off — only edit when you explicitly ask?"*
 
 8. **Large files** — only raise if files >300 lines found:
    > *"`src/models.py` is already 400 lines — want me to flag that as a file to read in sections rather than whole?"*
@@ -188,7 +190,7 @@ After walking through everything, echo the final values as a table before writin
 | Large files | `<list or "none">` |
 | Shipping style | `<continuous flow or milestones>` |
 | Planning doc | `<path or "none">` |
-| Deploy constraints | `<summary or "none">` |
+| Hands-off files | `<list or "none">` |
 | Mode | `<Solo or Team>` |
 | Merge policy | `<squash / regular / rebase>` |
 | Direct commits to `<branch>` | `<allowed or never>` |
