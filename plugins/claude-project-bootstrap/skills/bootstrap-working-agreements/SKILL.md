@@ -200,16 +200,6 @@ Wait for explicit confirmation before proceeding to Step 3.
 
 Capture all final values. Do not proceed to Step 3 until everything in the table is resolved.
 
-### Step 2e — Confirmation
-
-Echo the final table back before writing anything. When `<collaboration-mode>` = `team`, add:
-
-> **Mode: Team** — merge policy: `<merge-policy>`, direct commits to `<integration-branch>`: `<direct-to-main>`, auto-merge: off — Claude opens PRs and stops.
-
-Wait for explicit confirmation before proceeding.
-
-Wait for explicit confirmation before proceeding to Step 3.
-
 ---
 
 ## Step 3 — Run github-project-setup
