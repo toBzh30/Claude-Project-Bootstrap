@@ -133,60 +133,72 @@ Use what you find to form a default for every value below:
 | **Merge policy** | Solo → squash. Team → ask |
 | **Direct commits** | Solo → allowed. Team → never |
 
-### Step 2b — Present the proposed setup
+### Step 2b — Open with a characterisation, then walk through each item
 
-Open with a brief characterisation of what you found — one or two sentences, natural, not a bullet list. For example:
+Open with one or two sentences describing what you found — natural, not a bullet list:
 
-> *"This looks like a solo TypeScript CLI — single contributor, no subdirectories, no existing planning docs. Here's what I'd set up:"*
+> *"This looks like a solo Python API — two contributors in git history but CI is set up and there's a docker-compose.yml, so I'd treat it as a team repo. Here's what I'm thinking — let me walk through each item:"*
 
-Then show the proposed values as a table:
+Then **go through each proposed value conversationally, one or two at a time where they're naturally grouped**. Don't dump a table and ask for a single yes/no. For each item, state what you'd propose and why, and wait for the user to confirm or adjust before moving on.
 
-| Setting | Proposed | Notes |
-|---|---|---|
-| Project name | `<repo-name>` | Title of the GitHub Project board |
-| Main branch | `<default-branch>` | Where PRs merge into |
-| Subdirectory context files | `<list or "none">` | Per-subdir CLAUDE.md files |
-| Large files to read narrowly | `<list or "none">` | Claude reads these with offset/limit |
-| Shipping style | `<continuous flow or milestone-based>` | |
-| Planning doc to import | `<path or "none">` | |
-| Deploy constraints | `<summary or "none">` | |
-| Mode | `<Solo or Team>` | Solo: Claude merges. Team: Claude opens PRs, humans merge |
-| Merge policy | `<squash / regular / rebase>` | |
-| Direct commits to `<branch>` | `<allowed or never>` | |
+Natural groupings:
 
-Add a one-liner explanation of what GitHub Projects is if the repo has no prior issues or project board — the user may not know what they're getting:
+1. **Project name + what it is** — name first (fast confirm), then ask for the project description since you can't infer it:
+   > *"Project name: `acme-api` — sound right?"* → confirm → *"Now the one thing I can't infer: give me a paragraph describing what this does, who uses it, and the most important constraint I should know on turn 1."*
+   If the repo has a README, draft the paragraph from it and ask the user to confirm or refine.
 
-> *"GitHub Projects is a built-in board I'll use to track what we've decided, what's deferred, and what's in flight — so context survives across sessions and machines."*
+2. **Main branch** — usually a quick confirm:
+   > *"Main branch is `main` — that's where PRs land?"*
 
-### Step 2c — Ask only what you can't infer
+3. **Shipping style** — explain the implication briefly:
+   > *"I don't see any milestone planning docs, so I'd suggest continuous flow — ship whenever something's ready, no fixed releases. Does that fit, or do you want milestone-based (Alpha/Beta/GA)?"*
+   If milestones: ask for names + one-line "done" bar for each before moving on.
 
-After showing the table, there is exactly **one thing** you cannot infer from the repo: **what this project is in plain English**. Ask for it directly:
+4. **Solo vs team + merge policy + direct commits** — these three belong together:
+   > *"I see two contributors in git history and CI is set up — I'd treat this as a team repo, so I'll open PRs and stop for review rather than merging automatically. Squash merge as the default? And should small fixes like typo corrections go directly to `main`, or always via PR?"*
+   If the signals are ambiguous or the repo is young (few commits), just ask directly: *"Will you be working on this alone or with a team?"*
 
-> *"The one thing I can't infer: give me a paragraph describing what this project does, who uses it, and the most important constraint I should know on turn 1. This goes into CLAUDE.md and sets context for every future session."*
+5. **Subdirectory context files** — only raise if subdirs exist:
+   > *"I see `src/` and `tests/` — do either of these have their own conventions worth capturing in a separate context file, or is the root CLAUDE.md enough?"*
 
-If the repo has a README, read it first — you may be able to draft the paragraph yourself and ask the user to confirm or refine rather than writing from scratch.
+6. **Planning doc** — only raise if one exists:
+   > *"There's a TODO.md with 3 items — want me to convert those into GitHub issues on the board?"*
 
-If the user gives a one-liner, gently ask for more — a vague description here means vague context in every future session.
+7. **Deploy constraints** — only raise if CI or infra files detected:
+   > *"I see `.github/workflows/ci.yml` and `docker-compose.yml` — should I treat those as hands-off (never edit without you asking)? And is there a canonical command to run this locally?"*
 
-### Step 2d — Handle adjustments
+8. **Large files** — only raise if files >300 lines found:
+   > *"`src/models.py` is already 400 lines — want me to flag that as a file to read in sections rather than whole?"*
 
-After the user confirms or adjusts the proposed table and provides the project description, resolve any open items:
+**What you can always infer silently** (don't ask, just use):
+- Project name → repo name
+- Main branch → default branch from preflight
+- Direct commits default → allowed for solo, never for team
 
-- **Milestone-based confirmed**: ask for milestone names + one-line "done" bar for each. Keep it to 2–4 milestones.
-- **Deploy constraints flagged**: ask which files are off-limits and what the canonical run command is (two quick follow-ups, not a separate interview).
-- **Team mode**: confirm merge policy explicitly if not already clear — squash is a safe default but some teams have strong preferences.
+### Step 2c — Confirmation
 
-Capture all final values. Do not proceed to Step 3 until everything in the table is resolved.
+After walking through everything, echo the final values as a table before writing anything:
 
-### Step 2e — Confirmation
+| Setting | Value |
+|---|---|
+| Project name | `<value>` |
+| What it is | `<first sentence>` |
+| Main branch | `<value>` |
+| Subdirectory context files | `<list or "none">` |
+| Large files | `<list or "none">` |
+| Shipping style | `<continuous flow or milestones>` |
+| Planning doc | `<path or "none">` |
+| Deploy constraints | `<summary or "none">` |
+| Mode | `<Solo or Team>` |
+| Merge policy | `<squash / regular / rebase>` |
+| Direct commits to `<branch>` | `<allowed or never>` |
 
-Echo the final table back before writing anything. When `<collaboration-mode>` = `team`, add:
-
+When `<collaboration-mode>` = `team`, add:
 > **Mode: Team** — merge policy: `<merge-policy>`, direct commits to `<integration-branch>`: `<direct-to-main>`, auto-merge: off — Claude opens PRs and stops.
 
-Wait for explicit confirmation before proceeding.
-
 Wait for explicit confirmation before proceeding to Step 3.
+
+Capture all final values. Do not proceed to Step 3 until everything in the table is resolved.
 
 ---
 
