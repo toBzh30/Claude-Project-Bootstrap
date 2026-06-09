@@ -37,7 +37,7 @@ cd <new-repo>
 /claude-project-bootstrap:bootstrap-working-agreements
 ```
 
-The skill prompts for the bits it can't infer (project name, integration branch, milestones), confirms before creating issues / fields / files, and leaves you with a working setup in one pass.
+The skill reads the repo, proposes a setup, and walks through each item conversationally — the only thing it can't infer is what the project actually does. Confirms before creating anything, and leaves you with a working setup in one pass.
 
 **Existing repo:**
 
