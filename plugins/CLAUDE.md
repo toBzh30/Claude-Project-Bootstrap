@@ -8,27 +8,37 @@ This directory contains the plugin source. All substantive work happens here.
 
 ```
 plugins/
-└── claude-project-bootstrap/
+├── claude-project-bootstrap/       # one-time project SETUP (run per new repo)
+│   ├── .claude-plugin/
+│   │   └── plugin.json          # plugin metadata (name, author)
+│   ├── hooks/                   # git/PR lifecycle hooks — auto-loaded in any repo where the plugin is enabled
+│   │   ├── hooks.json           # registers the hooks on Bash Pre/PostToolUse
+│   │   ├── preflight-branch.sh  # PreToolUse: collision guard before <type>/<N>- branch creation
+│   │   ├── claim-branch.sh      # PostToolUse: assign @me + Status → In Progress (reads .claude/gh-project.json)
+│   │   └── doc-gate.sh          # PreToolUse: deny + direct Claude to update docs when a PR ships code but no docs
+│   └── skills/
+│       ├── bootstrap-working-agreements/
+│       │   ├── SKILL.md         # orchestrator skill — calls the other two
+│       │   └── templates/       # files written into target repos at bootstrap time
+│       ├── github-project-setup/
+│       │   ├── SKILL.md         # GitHub Project v2 setup skill
+│       │   ├── scripts/         # migrate_doc.py — planning doc → issues migration
+│       │   └── templates/       # issue templates (feature.yml, bug.yml, roadmap.md)
+│       ├── split-claudemd/
+│       │   └── SKILL.md         # CLAUDE.md hub-and-spokes refactor skill
+│       └── update-conventions/
+│           └── SKILL.md         # pull plugin-template improvements into an already-bootstrapped repo
+└── engineering-craft/              # ongoing CRAFT skills (enabled permanently) — vendored from mattpocock/skills (MIT)
     ├── .claude-plugin/
-    │   └── plugin.json          # plugin metadata (name, author)
-    ├── hooks/                   # git/PR lifecycle hooks — auto-loaded in any repo where the plugin is enabled
-    │   ├── hooks.json           # registers the hooks on Bash Pre/PostToolUse
-    │   ├── preflight-branch.sh  # PreToolUse: collision guard before <type>/<N>- branch creation
-    │   ├── claim-branch.sh      # PostToolUse: assign @me + Status → In Progress (reads .claude/gh-project.json)
-    │   └── doc-gate.sh          # PreToolUse: ask to update docs when a PR ships code but no docs
-    └── skills/
-        ├── bootstrap-working-agreements/
-        │   ├── SKILL.md         # orchestrator skill — calls the other two
-        │   └── templates/       # files written into target repos at bootstrap time
-        ├── github-project-setup/
-        │   ├── SKILL.md         # GitHub Project v2 setup skill
-        │   ├── scripts/         # migrate_doc.py — planning doc → issues migration
-        │   └── templates/       # issue templates (feature.yml, bug.yml, roadmap.md)
-        ├── split-claudemd/
-        │   └── SKILL.md         # CLAUDE.md hub-and-spokes refactor skill
-        └── update-conventions/
-            └── SKILL.md         # pull plugin-template improvements into an already-bootstrapped repo
+    │   └── plugin.json
+    ├── LICENSE                  # Matt Pocock's MIT license (vendored code)
+    ├── ATTRIBUTION.md           # source pinned commit + adaptations + what's not vendored
+    └── skills/                  # landing across PRs: zoom-out, diagnose, tdd, prototype, grill-with-docs, improve-codebase-architecture, to-issues, to-prd
+        └── zoom-out/
+            └── SKILL.md
 ```
+
+Two plugins, one marketplace, **different lifecycles**: `claude-project-bootstrap` is one-time *setup* (run once per repo); `engineering-craft` is ongoing *craft* (enabled permanently, used on every task). Separate plugins so a craft-skill fix doesn't re-pull setup tooling, and setup-only users aren't forced to take the craft skills. `engineering-craft` is **fork-and-adapt** from `mattpocock/skills` — see its `ATTRIBUTION.md` for the source commit and the adaptations (ADR/glossary paths, stripped AFK absence-detection, Project-contract issue creation). Skills there are **tool-agnostic discipline, never infrastructure**, so they land additively in repos with their own test setup.
 
 ## Hooks ship from the plugin (unlike templates)
 

@@ -1,0 +1,7 @@
+{
+  "name": "engineering-craft",
+  "description": "Engineering craft skills (diagnose, tdd, prototype, zoom-out, grill-with-docs, improve-codebase-architecture, to-issues, to-prd) adapted from mattpocock/skills (MIT) to the bootstrap conventions and the AFK/HITL model.",
+  "author": {
+    "name": "toBzh30"
+  }
+}

@@ -11,6 +11,12 @@
       "description": "Lay down working-agreements.md, roadmap.md, CLAUDE.md hub+spokes, and a GitHub Project (v2) with custom fields and labels — one command per new repo.",
       "source": "./plugins/claude-project-bootstrap",
       "category": "development"
+    },
+    {
+      "name": "engineering-craft",
+      "description": "Engineering craft skills — diagnose, tdd, prototype, zoom-out, grill-with-docs, improve-codebase-architecture, to-issues, to-prd — adapted from mattpocock/skills (MIT) to the bootstrap conventions and the AFK/HITL model. Enabled permanently (ongoing craft), separate from the one-time setup plugin.",
+      "source": "./plugins/engineering-craft",
+      "category": "development"
     }
   ]
 }
