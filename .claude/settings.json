@@ -1,0 +1,12 @@
+{
+  "extraKnownMarketplaces": {
+    "claude-project-bootstrap": {
+      "source": "github",
+      "repo": "toBzh30/Claude-Project-Bootstrap"
+    }
+  },
+  "enabledPlugins": {
+    "claude-project-bootstrap@claude-project-bootstrap": true,
+    "engineering-craft@claude-project-bootstrap": true
+  }
+}

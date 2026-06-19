@@ -16,7 +16,7 @@ The source repo for the `claude-project-bootstrap` Claude Code **marketplace**, 
 | Issue templates (`.github/ISSUE_TEMPLATE/`) | Done |
 | AFK/HITL execution mode (`Mode` field + working-agreements) | Done |
 | `engineering-craft` plugin (vendored craft skills) | Done |
-| Dogfooding (bootstrap applied to this repo) | In progress |
+| Dogfooding (bootstrap applied to this repo) | Done |
 | Make repo public | Done |
 
 This table is a snapshot. **Live planning source is the [Claude-Project-Bootstrap GitHub Project](https://github.com/users/toBzh30/projects/2)** — query it via `gh project item-list 2 --owner toBzh30` for current state before answering "what's next" or proposing work.
