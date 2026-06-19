@@ -4,9 +4,10 @@
 # Fires when a Bash command ships a branch (`gh pr create` or `gh pr merge`).
 # Compares the branch's diff against the repo's default branch:
 #   - if it changed CODE but touched NO docs, and the command isn't already
-#     opted out, ask the user to confirm before shipping (permissionDecision
-#     "ask") with a reminder to update the repo's docs (working-agreements
-#     phase 6).
+#     opted out, DENY the command (permissionDecision "deny") with a reason
+#     directed at Claude: check whether a doc update is needed, update it in
+#     this branch (working-agreements phase 6), then re-run. The user is never
+#     prompted — Claude actions the gate itself and re-ships.
 #   - any other command, or a diff that already includes docs, allows silently.
 #
 # Enforces the doc-reconcile rule via the harness instead of relying on Claude's
@@ -48,15 +49,17 @@ code=$(printf '%s\n' "$files" \
   | grep -vE '(_test\.|\.test\.|\.spec\.|(^|/)(mocks?|vendor|node_modules|dist|build|target)/)' || true)
 docs=$(printf '%s\n' "$files" | grep -E '(^|/)(CLAUDE|ARCHITECTURE|README)\.md$|^\.claude/rules/.*\.md$|^docs/' || true)
 
-# Code changed, no docs in the PR → ask.
+# Code changed, no docs in the branch → deny so Claude actions it (never the user).
 if [ -n "$code" ] && [ -z "$docs" ]; then
-  reason="This PR changes code but touches no docs. Working-agreements phase 6: \
-update the repo's docs in the same PR (CLAUDE.md / ARCHITECTURE.md / .claude/rules/decisions.md). \
-If there's genuinely no doc impact, re-run with 'no docs needed' in the PR body."
+  reason="This branch changes code but touches no docs. Before shipping, CHECK whether these \
+changes need a doc update (CLAUDE.md / ARCHITECTURE.md / .claude/rules/decisions.md) per \
+working-agreements phase 6 — if so, update the relevant doc in this branch and re-run. If you \
+determine there is genuinely no doc impact, re-run with 'no docs needed' in the command or PR \
+body. This gate is for you (Claude) to action — do not ask the user to decide."
   jq -nc --arg r "$reason" '{
     hookSpecificOutput: {
       hookEventName: "PreToolUse",
-      permissionDecision: "ask",
+      permissionDecision: "deny",
       permissionDecisionReason: $r
     }
   }'
