@@ -47,3 +47,15 @@ The *why* — separate from `working-agreements.md` (the *what*) and the GitHub 
 **Decision:** "Claude only starts an AFK sweep on an explicit user instruction, and never infers it from user silence/absence" is enforced as a strong working-agreements convention — *not* by a `/afk-sweep` command + PreToolUse hook. The mechanical initiation gate is deferred, not built.
 **Why:** The user accepts the soft-guardrail residual (ambiguous NL initiation, `/loop` drift, skill-local "proceed if AFK" text, context decay, cold sub-agents) because the blast radius is already bracketed at the *other* end by the merge gate (review-required / branch-protection can't be talked past) — an over-eager model can prepare PRs but not land them unreviewed. A hard initiation gate (explicit token + hook) stays a future opt-in if the convention proves leaky. On vendoring, Matt's craft skills' own "proceed if the user is AFK" absence-detection is **stripped** — only an explicitly-initiated sweep unlocks proceed-without-waiting; outside that, checkpoints wait (silence ≠ approval).
 **Status:** Active
+
+## 2026-06-19 — Craft skills are tool-agnostic discipline, never infrastructure
+
+**Decision:** The vendored `engineering-craft` skills teach *discipline* (test-first, mock-at-boundary, contract-at-seam) and stay tool-agnostic — they never prescribe a test framework, mocking library, or CI shape. (References #35)
+**Why:** A craft skill propagates into already-bootstrapped repos that have their own mature, possibly-divergent test infrastructure. If the skill carried infrastructure, the "update" would fight or overwrite what's there. Discipline-only is additive: a repo with existing tests gains invokable craft tools + absorbable prose, never an infra rewrite. Baking in a framework would also weld a public-marketplace plugin to one stack.
+**Status:** Active
+
+## 2026-06-19 — Cross-repo tdd slices: contract-at-seam, not single-owner e2e
+
+**Decision:** When a vertical slice spans repos, treat the other repo as a system boundary: tracer-bullet each side against a shared SDK-style contract (consumer mocks the provider at the contract; provider tested standalone), plus exactly one real cross-repo e2e proof per slice. Opt-in, gated on "slice spans repos" — single-repo repos never see it. (References #35)
+**Why:** Falls directly out of Matt's existing `mocking.md` rule ("mock at system boundaries, never what you control") — a separate repo *is* a boundary. The rejected alternative (one owning-repo e2e driving both real systems per slice) is slow, couples the two repos' test runs on every change, and contradicts mock-at-boundaries. The single real e2e is the only place mock drift gets caught. Tool-agnostic (Pact / shared-schema snapshot / scripted harness — team's call).
+**Status:** Active
