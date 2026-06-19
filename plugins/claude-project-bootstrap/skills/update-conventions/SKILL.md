@@ -1,6 +1,6 @@
 ---
 name: update-conventions
-description: Pull later improvements from the claude-project-bootstrap plugin templates down into this repo's copied convention files — .claude/rules/working-agreements.md and the .github/ISSUE_TEMPLATE issue templates. A one-way (template → repo) reconcile that surfaces what the bundled template grew since this repo was bootstrapped and lets you merge in what you want, preserving local customizations. Use when you've updated the plugin and want an already-bootstrapped repo to catch up. Does NOT push repo changes back to the plugin.
+description: Pull later improvements from the claude-project-bootstrap plugin templates down into this repo's copied convention files — .claude/rules/working-agreements.md and the .github/ISSUE_TEMPLATE issue templates — and retrofit plugin enablement in .claude/settings.json (turning on plugins like engineering-craft that were added after this repo was bootstrapped). A one-way (template → repo) reconcile that surfaces what the bundled templates grew since this repo was bootstrapped and lets you merge in what you want, preserving local customizations. Use when you've updated the plugin and want an already-bootstrapped repo to catch up. Does NOT push repo changes back to the plugin.
 user-invocable: true
 allowed-tools:
   - Read
@@ -15,7 +15,7 @@ allowed-tools:
 
 # /update-conventions — Pull plugin-template improvements into this repo
 
-The plugin's **hooks, skills, and commands** auto-trickle when you update the marketplace — they run *from* the plugin install. But the files this plugin **copied into** a repo at bootstrap (`working-agreements.md`, the issue templates) are owned by the repo from that moment on; improvements to the bundled templates never reach them automatically. This skill closes that gap on demand.
+The plugin's **hooks, skills, and commands** auto-trickle when you update the marketplace — they run *from* the plugin install. But two things don't reach an already-bootstrapped repo on their own: (1) the files this plugin **copied into** the repo at bootstrap (`working-agreements.md`, the issue templates) are owned by the repo from that moment on, so template improvements never reach them; and (2) a **plugin added to the marketplace after this repo was bootstrapped** (e.g. `engineering-craft`) is never switched on here — and a plugin's skills only trickle in once it's in `enabledPlugins`. This skill closes both gaps on demand.
 
 **Direction: one-way, template → repo (pull-down only).** It surfaces what the bundled template grew and offers to merge it in. It never overwrites your local customizations, and it never pushes repo changes back up to the plugin — a repo that has improved its own conventions and wants to contribute that upstream does so via a normal PR to the plugin repo, not through this skill.
 
@@ -26,6 +26,7 @@ The plugin's **hooks, skills, and commands** auto-trickle when you update the ma
 | `.claude/rules/working-agreements.md` | `bootstrap-working-agreements/templates/working-agreements.md` | **Yes — primary** |
 | `.github/ISSUE_TEMPLATE/feature.yml` | `github-project-setup/templates/feature.yml` | Yes |
 | `.github/ISSUE_TEMPLATE/bug.yml` | `github-project-setup/templates/bug.yml` | Yes |
+| `.claude/settings.json` (`enabledPlugins`) | `bootstrap-working-agreements` Step 6.5 | Yes — retrofit missing plugin enablements (e.g. `engineering-craft`) |
 
 **Deliberately out of scope** (a diff would be all noise — these are per-repo content, not shared convention): the root/spoke `CLAUDE.md` scaffolds, `.claude/rules/roadmap.md`, and the *body* of `.claude/rules/decisions.md`.
 
@@ -128,6 +129,25 @@ diff "${CLAUDE_PLUGIN_ROOT}/skills/github-project-setup/templates/feature.yml" .
 
 - **Identical** → report "matches bundled template" and skip.
 - **Differs** → summarize the difference (added/removed fields, changed labels), discount the `type:` line per above, and offer to update toward the template. On approval, `Edit` in the template's improvements while keeping any repo-local fields the maintainer added.
+
+---
+
+## Step 2.5 — Retrofit plugin enablement (`.claude/settings.json`)
+
+A plugin's skills only load once it's in `enabledPlugins`. A repo bootstrapped before a plugin existed (e.g. `engineering-craft`) has that plugin's skills sitting in the marketplace but switched **off**. This step turns on any plugin the current bootstrap would enable that this repo is missing.
+
+Read the repo's `.claude/settings.json` (if absent, the repo never ran Step 6.5 — recommend running `bootstrap-working-agreements` Step 6.5, and skip this step). List what's enabled:
+
+```bash
+jq -r '.enabledPlugins // {} | keys[]' .claude/settings.json 2>/dev/null
+```
+
+The current `bootstrap-working-agreements` Step 6.5 enables both:
+
+- `claude-project-bootstrap@claude-project-bootstrap` (setup hooks)
+- `engineering-craft@claude-project-bootstrap` (ongoing craft skills)
+
+For any **missing** key, offer to add it — and ensure `extraKnownMarketplaces` has the `claude-project-bootstrap` entry so the marketplace resolves. Merge the key in with `Edit`; **don't clobber** other settings, and never touch `.claude/settings.local.json` (per-user, gitignored). A repo that deliberately wants setup-only can decline `engineering-craft` (it'll simply be re-offered on the next run — harmless). The newly-enabled plugin's skills load on the **next** Claude session.
 
 ---
 
