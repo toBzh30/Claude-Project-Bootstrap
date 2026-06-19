@@ -81,7 +81,7 @@ When ambiguous, ask. **Default-yes for discrete intent; default-no for housekeep
 
 | Event | Claude does (exact commands) |
 |---|---|
-| User mentions a discrete idea/bug/refactor | `gh issue create -t "<title>" -b "<body>" -l <labels>` (auto-added to project), **then immediately set the GitHub issue type if the org has them configured**: `gh api -X PATCH repos/<owner>/<repo>/issues/<N> -f type=<type-name>` (UI-filed issues pick up `type:` from `.github/ISSUE_TEMPLATE/*.yml` automatically). Set Project fields next: `<strategic-field>`, `Area`, `Priority`. Then report back: *"filed as #N — title, type=…, labels=…, `<strategic-field>`=…, Area=…, Priority=…, milestone=…. Anything you'd add?"* |
+| User mentions a discrete idea/bug/refactor | `gh issue create -t "<title>" -b "<body>" -l <labels>` (auto-added to project), **then immediately set the GitHub issue type if the org has them configured**: `gh api -X PATCH repos/<owner>/<repo>/issues/<N> -f type=<type-name>` (UI-filed issues pick up `type:` from `.github/ISSUE_TEMPLATE/*.yml` automatically). Set Project fields next: `<strategic-field>`, `Area`, `Priority`, `Mode` (`HITL` unless the issue clears the AFK bar — see *AFK vs HITL issues*). Then report back: *"filed as #N — title, type=…, labels=…, `<strategic-field>`=…, Area=…, Priority=…, milestone=…, Mode=…. Anything you'd add?"* |
 | User says something ambiguously trackable | Ask first: *"Should I file this as an issue, or handle it inline?"* |
 | Substantive new feature surfaces | Ask 2–3 clarifying questions (*who uses this? what triggers it? what's the simplest version that ships?*), then `gh issue create` with a real body |
 | Picking up a tracked issue #N | Follow read → architect → plan → review → execute → reconcile (see "How we work through issues"). **Don't run `git checkout -b` or flip Status until the user has signed off on the approach.** Once approved: `git checkout -b <type>/N-<slug>`, set Status → In Progress (`gh project item-edit … --field-id <Status> --single-select-option-id <In Progress>`), `gh issue comment N -b "<one-line plan>"`. |
@@ -90,6 +90,8 @@ When ambiguous, ask. **Default-yes for discrete intent; default-no for housekeep
 | Out-of-scope item surfaces mid-PR | Push back, propose a new issue, `gh issue create …`, keep current PR focused |
 | Decision worth logging surfaces (rule with non-obvious why, multi-week debate ends, pivot, rejected path, invisible constraint) | Add an entry to `.claude/rules/decisions.md` per the format in "When to log a decision" |
 | Shipping | <shipping-row> |
+| User explicitly says *"work through the AFK issues"* (or starts a `/loop`) | Run the **sweep**: drain `Mode = AFK` issues one at a time (Priority desc, then issue # asc), each through the full lifecycle → PR → green CI + clean `/code-review` → the `afk.merge` gate. Park-and-continue on any downgrade trigger. End with a report: *"N merged, M parked, with reasons."* **Never start this from user silence** — only an explicit instruction. See *AFK vs HITL issues*. |
+| AFK issue hits a downgrade trigger mid-sweep | Flip `Mode → HITL`, `gh issue comment N -b "parked: <one-line reason>"`, leave the branch/PR for the user, continue the sweep to the next issue |
 | Stale items in Todo for weeks | Surface for user: *"#N has been Todo since <date> — still relevant or close as wontfix?"* — user makes the call, never auto-close |
 
 ### Setting Issue type
@@ -174,6 +176,59 @@ If you can't meet both conditions, you're past the trivial threshold — do the 
 - ***"I'll combine fixing this and improving that"*** — two issues, two PRs. Push back.
 - **Skipping the Read phase because *"I remember this code"*** — context decays between sessions. Read it again.
 - **Architect / plan but no review checkpoint** — implementing on inferred sign-off. Wait for an explicit *"go"*.
+
+---
+
+## AFK vs HITL issues
+
+Every tracked issue carries a **`Mode`** (Project field: `HITL` default, or `AFK`). `Mode` decides whether Claude may work the issue **unattended** — under two gates, the second of which is **never inferred**:
+
+1. **Eligibility** — `Mode = AFK` marks the issue *eligible* to run unattended.
+2. **Initiation** — Claude starts an AFK sweep **only** on an explicit instruction (*"work through the AFK issues"*, or a `/loop` you start). **User silence/absence is never initiation** — going quiet does not authorize Claude to begin (same invariant as *"silence is not approval"*).
+
+Neither gate alone suffices: an `AFK`-tagged issue sits untouched until you explicitly initiate; an explicit *"go"* only reaches `AFK`-tagged issues.
+
+This is a **modifier on the six phases, not a replacement.** For an `AFK` issue inside an initiated sweep, the phase-4 sign-off checkpoints are **pre-authorized** (the tag *is* the up-front approval); architect→plan→execute run without pausing. `HITL` issues run the full flow unchanged.
+
+### When Claude tags an issue `AFK`
+
+The eligibility bar is the **inverse of the downgrade triggers** below — at file time Claude foresees *none* of them: scope unambiguous, no unresolved architectural fork, no irreversible/outward-facing step, a plausible test seam, bounded. Use the **lightest method** that clears the bar — grilling is not a per-issue tax:
+
+| How clear at file time | Path to `AFK` |
+|---|---|
+| Already clear (trivial or well-specified) | tag `AFK` immediately |
+| Mildly fuzzy | a clarifying question, or read the codebase, then `AFK` |
+| Genuinely contested (competing designs / unresolved fork) | resolve it (e.g. a grilling session) → `AFK` |
+| Unresolvable without real-time judgment, or touches prod | leave `HITL` |
+
+Claude sets `Mode` when filing and **reports it** (you can veto). Default `HITL` — `AFK` is earned.
+
+### The sweep
+
+On an explicit initiation, Claude drains `AFK`-eligible issues **one at a time**, ordered **Priority desc, then issue number asc**. Each issue runs the full lifecycle → opens a PR → green CI + a clean `/code-review` self-review → the merge gate.
+
+- **Sequential, not parallel** — each issue branches from the updated `main`, so dependencies resolve in order and no two PRs race to merge.
+- **Park-and-continue** — a downgrade trigger parks *that* issue and the sweep moves on; one issue never sinks the run.
+- **End-of-run report** — *"N merged, M parked for you, with reasons."*
+
+### The merge gate (`afk.merge`)
+
+Read from `.claude/gh-project.json` → `afk.merge`:
+
+- **`auto-merge`** (default) — green CI + clean self-review → `gh pr merge --auto --squash`.
+- **`review-required`** — open the PR, request review, **do not** arm `--auto`; a human merges. Independent issues become reviewable PRs; dependent ones park on their predecessor's merge.
+
+`afk.merge` is a convention Claude honors, **independent of GitHub branch protection** (unavailable on some plans/visibilities). Branch protection, where available, is optional hardening on top.
+
+### Downgrade-to-HITL triggers (park: flip `Mode → HITL`, comment why, continue the sweep)
+
+1. Scope turns ambiguous (two+ materially different implementations).
+2. Out-of-scope work is required → file a new issue, park the original as *blocked-on-#new* (never smuggle).
+3. Architectural fork with no clear default (a `decisions.md`-worthy choice).
+4. Irreversible / outward-facing step the issue didn't authorize.
+5. The `/code-review` self-review finds a real correctness bug (not a nit).
+6. Can't reach green CI / no correct test seam.
+7. Thrashing guard — 3 cycles without converging.
 
 ---
 
