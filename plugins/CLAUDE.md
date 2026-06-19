@@ -11,6 +11,11 @@ plugins/
 └── claude-project-bootstrap/
     ├── .claude-plugin/
     │   └── plugin.json          # plugin metadata (name, author)
+    ├── hooks/                   # git/PR lifecycle hooks — auto-loaded in any repo where the plugin is enabled
+    │   ├── hooks.json           # registers the hooks on Bash Pre/PostToolUse
+    │   ├── preflight-branch.sh  # PreToolUse: collision guard before <type>/<N>- branch creation
+    │   ├── claim-branch.sh      # PostToolUse: assign @me + Status → In Progress (reads .claude/gh-project.json)
+    │   └── doc-gate.sh          # PreToolUse: ask to update docs when a PR ships code but no docs
     └── skills/
         ├── bootstrap-working-agreements/
         │   ├── SKILL.md         # orchestrator skill — calls the other two
@@ -22,6 +27,10 @@ plugins/
         └── split-claudemd/
             └── SKILL.md         # CLAUDE.md hub-and-spokes refactor skill
 ```
+
+## Hooks ship from the plugin (unlike templates)
+
+The three `hooks/` scripts are **not** copied into target repos — they run *from* the plugin install, so improvements trickle down on marketplace update (the opposite of templates). They activate in any repo whose committed settings enable this plugin. All three **fail open / no-op** when their tooling (`gh`, `jq`) or config is missing, so an enabled-but-unconfigured repo is never blocked. `claim-branch` is the only one needing per-repo config — it reads Project coordinates from `.claude/gh-project.json` (written by `github-project-setup` Step 4b) and no-ops entirely when that file is absent. `preflight-branch` and `doc-gate` need no config.
 
 ## Key constraint: templates are copied, not linked
 

@@ -259,7 +259,53 @@ Create only the strategic-dimension field that matches `<project-scope>` (Tier x
 >
 > The user does this once after Step 4 completes — it's a 30-second UI step.
 
-After all fields exist, re-fetch `gh project field-list ... --format json` and **save the field IDs and option IDs** to a JSON file. You'll need them in Step 7.
+After all fields exist, re-fetch `gh project field-list ... --format json` and **save the field IDs and option IDs** to a JSON file (`/tmp/fields.json`). You'll need them in Step 4b and Step 7.
+
+---
+
+## Step 4b — Write `.claude/gh-project.json` (plugin hook config)
+
+The bundled plugin ships three git/PR hooks (`preflight-branch`, `claim-branch`, `doc-gate`). One of them — `claim-branch` — flips an issue's Project Status to **In Progress** when its `<type>/<N>-<slug>` branch is created. It needs this Project's coordinates, which you just discovered. Persist them to a small committed config so the hook can read them; **without this file the hook no-ops** and the board is never touched (so this step is what activates the auto-claim).
+
+Pull the five coordinates from the project and the saved field-list JSON:
+
+```bash
+gh project view <N> --owner <project-owner> --format json --jq '.id'   # id (PVT_...)
+jq -r '.fields[] | select(.name=="Status") | .id' /tmp/fields.json                                              # statusFieldId
+jq -r '.fields[] | select(.name=="Status") | .options[] | select(.name=="In Progress") | .id' /tmp/fields.json  # inProgressOptionId
+```
+
+Write `.claude/gh-project.json` (create `.claude/` if needed):
+
+```json
+{
+  "project": {
+    "owner": "<project-owner>",
+    "number": <N>,
+    "id": "<PVT_...>",
+    "statusFieldId": "<PVTSSF_...>",
+    "inProgressOptionId": "<opt-id>"
+  }
+}
+```
+
+**Ensure it's committed, not ignored.** A `.claude/` directory-ignore — or a `.claude/*` carve-out that only re-includes `rules/` (the pattern `bootstrap-working-agreements` lays down) — silently excludes this file. Verify:
+
+```bash
+git check-ignore -v .claude/gh-project.json   # no output / exit 1 = NOT ignored (good)
+```
+
+If it reports a match (ignored), extend the carve-out in `.gitignore` so the file is tracked, alongside any existing `!.claude/rules/` re-include:
+
+```
+.claude/*
+!.claude/rules/
+!.claude/gh-project.json
+```
+
+Wait for user confirmation before editing `.gitignore` (it changes what the team commits). Re-run `git check-ignore` to confirm it now reports NOT IGNORED.
+
+**Multi-repo note:** `claim-branch` resolves the issue's Project item by matching the *current repo* against `content.repository`, so one `.claude/gh-project.json` per tracked repo — all pointing at the same Project — is correct. Write it in each repo where the plugin is enabled.
 
 ---
 
