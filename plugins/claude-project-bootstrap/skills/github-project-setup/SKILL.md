@@ -1,6 +1,6 @@
 ---
 name: github-project-setup
-description: Set up a GitHub Project (v2) for a single repo or a multi-repo platform. Standardized statuses, custom fields (Tier or Initiative + Area/Priority/Effort), labels, and issue templates. Single-repo flow uses GitHub milestones; multi-repo flow uses a Project Initiative field for cross-repo coordination and surfaces the built-in Repository column. Optionally migrate an existing planning doc (deferred.md / TODO.md / ROADMAP.md / etc.) into auto-added issues. Use when the user wants to start tracking features/bugs/tech-debt in a structured project board, or asks how to coordinate across multiple repos under one org.
+description: Set up a GitHub Project (v2) for a single repo or a multi-repo platform. Standardized statuses, custom fields (Tier or Initiative + Area/Priority/Effort/Mode), labels, and issue templates. Single-repo flow uses GitHub milestones; multi-repo flow uses a Project Initiative field for cross-repo coordination and surfaces the built-in Repository column. Optionally migrate an existing planning doc (deferred.md / TODO.md / ROADMAP.md / etc.) into auto-added issues. Use when the user wants to start tracking features/bugs/tech-debt in a structured project board, or asks how to coordinate across multiple repos under one org.
 user-invocable: true
 allowed-tools:
   - Read
@@ -246,7 +246,16 @@ gh project field-create <N> --owner <project-owner> \
   --single-select-options "M1,M2,M3,M4,Phase-2,Backlog"
 ```
 
-Create only the strategic-dimension field that matches `<project-scope>` (Tier xor Initiative — not both unless the user explicitly wants both axes). Then create Area, Priority, Effort regardless of scope. The default Status field already exists and is editable via the UI (or `gh project field-update`) — add `Blocked` if it's not there.
+Create only the strategic-dimension field that matches `<project-scope>` (Tier xor Initiative — not both unless the user explicitly wants both axes). Then create Area, Priority, Effort, and **Mode** regardless of scope. The default Status field already exists and is editable via the UI (or `gh project field-update`) — add `Blocked` if it's not there.
+
+```bash
+# Mode — execution-mode gate (every scope). Default HITL; AFK is earned per issue.
+gh project field-create <N> --owner <project-owner> \
+  --name Mode --data-type SINGLE_SELECT \
+  --single-select-options "HITL,AFK"
+```
+
+**`Mode` (`HITL` / `AFK`, default `HITL`)** governs whether an issue may be worked **unattended**. It is a *load-bearing autonomy gate*, not a classification axis — distinct from Tier/Initiative, so the "single-maintainer repos skip Tier" guidance does **not** mean skip Mode. `AFK` only marks an issue *eligible* for an explicitly-initiated sweep; it never authorizes Claude to start on its own (silence is not approval). The full semantics — the authoring bar, the sweep, downgrade triggers, and the `afk.merge` gate — live in the bootstrapped repo's `working-agreements.md` (written by `bootstrap-working-agreements`).
 
 **Multi-repo only — surface the built-in Repository field in default views.** GitHub auto-tracks the repo for every Project item but hides the column by default. To make `Repository` visible (essential for cross-repo group/filter):
 
@@ -273,6 +282,7 @@ Pull the five coordinates from the project and the saved field-list JSON:
 gh project view <N> --owner <project-owner> --format json --jq '.id'   # id (PVT_...)
 jq -r '.fields[] | select(.name=="Status") | .id' /tmp/fields.json                                              # statusFieldId
 jq -r '.fields[] | select(.name=="Status") | .options[] | select(.name=="In Progress") | .id' /tmp/fields.json  # inProgressOptionId
+jq -r '.fields[] | select(.name=="Mode") | .id' /tmp/fields.json                                                # modeFieldId
 ```
 
 Write `.claude/gh-project.json` (create `.claude/` if needed):
@@ -284,10 +294,18 @@ Write `.claude/gh-project.json` (create `.claude/` if needed):
     "number": <N>,
     "id": "<PVT_...>",
     "statusFieldId": "<PVTSSF_...>",
-    "inProgressOptionId": "<opt-id>"
+    "inProgressOptionId": "<opt-id>",
+    "modeFieldId": "<PVTSSF_...>"
+  },
+  "afk": {
+    "merge": "auto-merge"
   }
 }
 ```
+
+The `project` block holds Project coordinates (field IDs). The **`afk`** block holds the one *policy* Claude honors during an AFK sweep:
+
+- **`afk.merge`** — `"auto-merge"` (default) or `"review-required"`. `auto-merge` arms `gh pr merge --auto --squash` on a green, self-reviewed AFK PR; `review-required` opens the PR and leaves it for a human (never arms `--auto`). It is a convention Claude honors, independent of GitHub branch protection (which isn't available on every plan/visibility). `modeFieldId` lets Claude set an issue's `Mode`; the hooks don't read either key (no hook gates AFK — initiation is a working-agreements convention, not a mechanical gate). Both keys are optional: absent `afk` ⇒ `auto-merge`; absent `modeFieldId` ⇒ resolve the field on demand.
 
 **Ensure it's committed, not ignored.** A `.claude/` directory-ignore — or a `.claude/*` carve-out that only re-includes `rules/` (the pattern `bootstrap-working-agreements` lays down) — silently excludes this file. Verify:
 
