@@ -56,6 +56,8 @@ Iterate until the user approves the breakdown.
 
 For each approved slice, follow the repo's `working-agreements.md` filing lifecycle: `gh issue create` with the right labels, then set the Project fields — `Area`, `Priority`, and **`Mode`** (the slice's AFK/HITL classification) — and report back as the lifecycle prescribes. The issue is auto-added to the Project.
 
+**If there's a parent** (a PRD issue, or a source issue you were handed), link each slice as a **sub-issue** of it — GitHub's native sub-issue relationship (`gh api -X POST repos/<owner>/<repo>/issues/<parent>/sub_issues -f sub_issue_id=<child-id>`), which drives the `Sub-issues progress` bar. With no parent, a flat issue is correct — sub-issues are optional, not required.
+
 Publish issues in dependency order (blockers first) so you can reference real issue numbers in the "Blocked by" field.
 
 Use the issue body template below (aligned with the repo's `.github/ISSUE_TEMPLATE/`):
@@ -63,7 +65,7 @@ Use the issue body template below (aligned with the repo's `.github/ISSUE_TEMPLA
 <issue-template>
 ## Parent
 
-A reference to the parent issue (if the source was an existing issue, otherwise omit this section). Use `References #N` — never `Closes` in an issue body.
+`References #N` for the parent issue (a PRD or source issue), if any — and link it as a real **sub-issue** per step 5 (the prose reference is just for readers). Omit this section for a standalone issue. Never use `Closes` in an issue body.
 
 ## What to build
 

@@ -5,7 +5,7 @@ description: Turn the current conversation context into a PRD for an initiative-
 
 This skill takes the current conversation context and codebase understanding and produces a PRD for an **initiative-scale** effort. Do NOT interview the user — just synthesize what you already know.
 
-> **Scope (read first).** A PRD sits *above* issues — it is an initiative spec that `to-issues` then fans into tracked issues. For discrete intent (a single feature/bug/refactor), file an issue directly per `working-agreements.md`, or use `to-issues`; do **not** write a PRD. Reaching for a PRD on small work creates a second, competing intake path. The PRD's permanent home in this marketplace's docs is not yet fixed — for now publish it as a **tracking issue** on the Project (revisit if a dedicated PRD location is wanted).
+> **Scope (read first).** A PRD is not a new kind of artifact — it is just a regular **issue** whose body is a PRD spec, at initiative scale, that holds **sub-issues**. It sits *above* the slices only in the sub-issue sense (parent ▸ children), nothing more. For discrete intent (a single feature/bug/refactor), file an issue directly per `working-agreements.md`, or use `to-issues`; do **not** write a PRD — reaching for one on small work creates a second, competing intake path.
 
 The issue/Project contract is set up by `github-project-setup` and recorded in `.claude/gh-project.json`.
 
@@ -19,7 +19,7 @@ A deep module (as opposed to a shallow module) is one which encapsulates a lot o
 
 Check with the user that these modules match their expectations. Check with the user which modules they want tests written for.
 
-3. Write the PRD using the template below, then publish it as a **tracking issue** on the Project. Set `Area` / `Priority`; set `Mode` = **`HITL`** — a PRD is an initiative spec, reviewed before its child issues run. Its child issues (created later via `to-issues`) carry their own per-slice `Mode`.
+3. Write the PRD using the template below, then publish it as an **issue whose body is the PRD** (per the `working-agreements.md` filing lifecycle). Set `Area` / `Priority`; set `Mode` = **`HITL`** — a PRD is an initiative spec, reviewed before its slices run. Its slices (created later via `to-issues`) become **sub-issues** of this issue and carry their own per-slice `Mode`.
 
 <prd-template>
 
