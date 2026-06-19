@@ -15,7 +15,7 @@ The source repo for the `claude-project-bootstrap` Claude Code plugin. Contains 
 | Plugin hooks (`preflight-branch` / `claim-branch` / `doc-gate`) | Done |
 | Issue templates (`.github/ISSUE_TEMPLATE/`) | Done |
 | Dogfooding (bootstrap applied to this repo) | In progress |
-| Make repo public | Pending |
+| Make repo public | Done |
 
 This table is a snapshot. **Live planning source is the [Claude-Project-Bootstrap GitHub Project](https://github.com/users/toBzh30/projects/2)** — query it via `gh project item-list 2 --owner toBzh30` for current state before answering "what's next" or proposing work.
 
