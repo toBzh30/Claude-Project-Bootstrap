@@ -2,7 +2,7 @@
 
 ## What Claude-Project-Bootstrap is
 
-The source repo for the `claude-project-bootstrap` Claude Code plugin. Contains the three skills (`bootstrap-working-agreements`, `github-project-setup`, `split-claudemd`), their templates, and the marketplace metadata. Work here means changes to the plugin itself — new skill steps, template improvements, bug fixes. The GitHub Project tracks that work; the working agreements here are also the bundled template that gets installed in target repos.
+The source repo for the `claude-project-bootstrap` Claude Code plugin. Contains the four skills (`bootstrap-working-agreements`, `github-project-setup`, `split-claudemd`, `update-conventions`), the git/PR hooks (`preflight-branch`, `claim-branch`, `doc-gate`), their templates, and the marketplace metadata. Work here means changes to the plugin itself — new skill steps, template improvements, bug fixes. The GitHub Project tracks that work; the working agreements here are also the bundled template that gets installed in target repos.
 
 ## What's built vs pending
 
@@ -11,6 +11,8 @@ The source repo for the `claude-project-bootstrap` Claude Code plugin. Contains 
 | `github-project-setup` | Done |
 | `bootstrap-working-agreements` | Done |
 | `split-claudemd` | Done |
+| `update-conventions` | Done |
+| Plugin hooks (`preflight-branch` / `claim-branch` / `doc-gate`) | Done |
 | Issue templates (`.github/ISSUE_TEMPLATE/`) | Done |
 | Dogfooding (bootstrap applied to this repo) | In progress |
 | Make repo public | Pending |

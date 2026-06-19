@@ -24,8 +24,10 @@ plugins/
         │   ├── SKILL.md         # GitHub Project v2 setup skill
         │   ├── scripts/         # migrate_doc.py — planning doc → issues migration
         │   └── templates/       # issue templates (feature.yml, bug.yml, roadmap.md)
-        └── split-claudemd/
-            └── SKILL.md         # CLAUDE.md hub-and-spokes refactor skill
+        ├── split-claudemd/
+        │   └── SKILL.md         # CLAUDE.md hub-and-spokes refactor skill
+        └── update-conventions/
+            └── SKILL.md         # pull plugin-template improvements into an already-bootstrapped repo
 ```
 
 ## Hooks ship from the plugin (unlike templates)
@@ -51,6 +53,7 @@ Each `SKILL.md` is both the skill definition and the executable instructions Cla
 | `bootstrap-working-agreements` | `bootstrap-working-agreements` | Orchestrator. Calls `github-project-setup` and `split-claudemd` as sub-steps. The template files here are the ones that land in target repos. |
 | `github-project-setup` | `github-project-setup` | Heaviest skill (~590 lines). Handles single-repo and multi-repo project shapes. `migrate_doc.py` is a starting-point script — adapted per target project, not run as-is. |
 | `split-claudemd` | `split-claudemd` | Lightest skill. Enforces the 200-line root CLAUDE.md cap. |
+| `update-conventions` | `Templates` | Post-bootstrap maintenance. One-way pull-down: reconciles a repo's copied `working-agreements.md` + issue templates against the bundled templates. Not part of the bootstrap flow. |
 
 ## Deferred / pending work
 
