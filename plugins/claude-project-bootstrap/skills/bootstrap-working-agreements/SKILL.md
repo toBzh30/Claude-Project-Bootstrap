@@ -354,9 +354,9 @@ Write each spoke. Confirm: *"Wrote `<subdir>/CLAUDE.md` as a starter — it has 
 
 ---
 
-## Step 6.5 — Activate the bundled plugin (turn on the hooks)
+## Step 6.5 — Activate the bundled plugins (hooks + craft skills)
 
-The plugin ships three git/PR hooks — `preflight-branch` (collision guard before `<type>/<N>-` branch creation), `claim-branch` (assign `@me` + Project Status → In Progress), and `doc-gate` (the Phase 6 doc-reconcile prompt at `gh pr create`) — that enforce the discipline this skill just wrote into `working-agreements.md`. They only fire in a repo that **enables the plugin**. Commit that enablement so it travels with the repo (other machines, other contributors).
+The `claude-project-bootstrap` plugin ships three git/PR hooks — `preflight-branch` (collision guard before `<type>/<N>-` branch creation), `claim-branch` (assign `@me` + Project Status → In Progress), and `doc-gate` (the Phase 6 doc-reconcile prompt at `gh pr create`) — that enforce the discipline this skill just wrote into `working-agreements.md`. The same marketplace also ships **`engineering-craft`** — the ongoing craft skills (`diagnose`, `tdd`, `prototype`, `grill-with-docs`, `improve-codebase-architecture`, `to-issues`, `to-prd`, `zoom-out`). Both only activate in a repo that **enables them**. Commit that enablement so it travels with the repo (other machines, other contributors).
 
 Write (merge into) the repo's committed `.claude/settings.json`:
 
@@ -369,12 +369,13 @@ Write (merge into) the repo's committed `.claude/settings.json`:
     }
   },
   "enabledPlugins": {
-    "claude-project-bootstrap@claude-project-bootstrap": true
+    "claude-project-bootstrap@claude-project-bootstrap": true,
+    "engineering-craft@claude-project-bootstrap": true
   }
 }
 ```
 
-- `extraKnownMarketplaces` registers the marketplace this plugin came from; `enabledPlugins` turns the plugin on (key is `<plugin-id>@<marketplace-id>` — both are `claude-project-bootstrap`).
+- `extraKnownMarketplaces` registers the marketplace both plugins come from; `enabledPlugins` turns them on (key is `<plugin-id>@<marketplace-id>`). Two plugins are enabled: **`claude-project-bootstrap`** (the setup hooks) and **`engineering-craft`** (the ongoing craft skills, on by default since they're used on every task). A repo that wants setup-only can drop the `engineering-craft` line.
 - **If `.claude/settings.json` already exists, merge these two keys in — don't clobber existing settings.** Per-user overrides belong in `.claude/settings.local.json` (gitignored) — leave that file alone.
 - Adjust `repo` if the marketplace is published elsewhere (a fork or org mirror); it must be a repo collaborators can read.
 

@@ -2,7 +2,7 @@
 
 ## What Claude-Project-Bootstrap is
 
-The source repo for the `claude-project-bootstrap` Claude Code plugin. Contains the four skills (`bootstrap-working-agreements`, `github-project-setup`, `split-claudemd`, `update-conventions`), the git/PR hooks (`preflight-branch`, `claim-branch`, `doc-gate`), their templates, and the marketplace metadata. Work here means changes to the plugin itself — new skill steps, template improvements, bug fixes. The GitHub Project tracks that work; the working agreements here are also the bundled template that gets installed in target repos.
+The source repo for the `claude-project-bootstrap` Claude Code **marketplace**, which ships **two plugins**: `claude-project-bootstrap` (one-time project *setup* — the four skills `bootstrap-working-agreements`, `github-project-setup`, `split-claudemd`, `update-conventions`, plus the git/PR hooks `preflight-branch`, `claim-branch`, `doc-gate`, and their templates) and `engineering-craft` (ongoing *craft* skills — `diagnose`, `tdd`, `prototype`, `grill-with-docs`, `improve-codebase-architecture`, `to-issues`, `to-prd`, `zoom-out`, vendored and adapted from [`mattpocock/skills`](https://github.com/mattpocock/skills), MIT). Work here means changes to the plugins themselves — new skill steps, template improvements, bug fixes. The GitHub Project tracks that work; the working agreements here are also the bundled template that gets installed in target repos.
 
 ## What's built vs pending
 
@@ -14,6 +14,8 @@ The source repo for the `claude-project-bootstrap` Claude Code plugin. Contains 
 | `update-conventions` | Done |
 | Plugin hooks (`preflight-branch` / `claim-branch` / `doc-gate`) | Done |
 | Issue templates (`.github/ISSUE_TEMPLATE/`) | Done |
+| AFK/HITL execution mode (`Mode` field + working-agreements) | Done |
+| `engineering-craft` plugin (vendored craft skills) | Done |
 | Dogfooding (bootstrap applied to this repo) | In progress |
 | Make repo public | Done |
 
