@@ -21,7 +21,7 @@ allowed-tools:
 
 The goal: a single project board that holds *all* in-flight work (features, bugs, tech-debt) with consistent custom fields so you can group, filter, and prioritise across types. **The skill handles two project shapes**:
 
-- **Single-repo** — one Project tracks one repo. GitHub milestones for releases. Tier/Area/Priority/Effort custom fields.
+- **Single-repo** — one Project tracks one repo. GitHub milestones for releases. Tier/Area/Priority/Effort/Mode custom fields.
 - **Multi-repo** — one Project tracks several repos under the same org (typical for platforms with split frontend/backend/infra/runtime repos). Initiative custom field replaces Tier as the strategic axis; built-in Repository column added to default views; per-repo milestones de-emphasized in favor of cross-repo Initiatives.
 
 Step 1 detects which case applies and the rest of the flow branches accordingly.
@@ -158,7 +158,7 @@ Surface anything that looks like it might already track this repo (title contain
 
 Wait for the user's choice. Capture as `<project-owner>`. **All `gh project ...` calls in later steps use `--owner <project-owner>`.** Repo-scoped calls (`gh issue ...`, `gh label ...`, `gh repo ...`) keep using `<owner>/<repo>`.
 
-**If the user wants to extend an existing project** — capture its number as `<N>` and skip Step 4's project-creation block. Still run the field-creation block to add any missing Tier/Area/Priority/Effort fields.
+**If the user wants to extend an existing project** — capture its number as `<N>` and skip Step 4's project-creation block. Still run the field-creation block to add any missing Tier/Area/Priority/Effort/Mode fields.
 
 **If `<project-owner>` ≠ `<owner>`** — surface the implication explicitly so the user knows what they're choosing:
 
