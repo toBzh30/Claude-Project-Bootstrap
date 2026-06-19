@@ -34,8 +34,8 @@ cd "${cwd:-${CLAUDE_PROJECT_DIR:-.}}" 2>/dev/null || allow
 # Follow the command to the repo it actually operates on, not the session cwd.
 # Cross-repo branch creation takes one of two shapes — honor both so the checks
 # below run against the *target* repo's origin/issues/PRs:
-#   cd ../Orchestrator && git checkout -b feat/52-x   → target = ../Orchestrator
-#   git -C ../Orchestrator checkout -b feat/52-x      → target = ../Orchestrator
+#   cd ../sibling-repo && git checkout -b feat/52-x   → target = ../sibling-repo
+#   git -C ../sibling-repo checkout -b feat/52-x      → target = ../sibling-repo
 # `git -C` wins if both appear (it's what git actually obeys).
 if [[ "$cmd" =~ (^|\&\&|\;|\|)[[:space:]]*cd[[:space:]]+([^[:space:]\&\;\|]+) ]]; then
   cd "${BASH_REMATCH[2]}" 2>/dev/null || allow
