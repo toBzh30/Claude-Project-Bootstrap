@@ -28,17 +28,19 @@ plugins/
 │       │   └── SKILL.md         # CLAUDE.md hub-and-spokes refactor skill
 │       └── update-conventions/
 │           └── SKILL.md         # pull plugin-template improvements into an already-bootstrapped repo
-└── engineering-craft/              # ongoing CRAFT skills (enabled permanently) — vendored from mattpocock/skills (MIT)
+└── engineering-craft/              # ongoing CRAFT skills (enabled permanently) — mostly vendored from mattpocock/skills (MIT), plus homegrown skills
     ├── .claude-plugin/
     │   └── plugin.json
     ├── LICENSE                  # Matt Pocock's MIT license (vendored code)
     ├── ATTRIBUTION.md           # source pinned commit + adaptations + what's not vendored
-    └── skills/                  # landing across PRs: zoom-out, diagnose, tdd, prototype, grill-with-docs, improve-codebase-architecture, to-issues, to-prd
-        └── zoom-out/
+    └── skills/                  # vendored: zoom-out, diagnose, tdd, prototype, grill-with-docs, improve-codebase-architecture, to-issues, to-prd · homegrown: checkpoint
+        ├── zoom-out/
+        │   └── SKILL.md
+        └── checkpoint/          # homegrown (not from mattpocock) — session-handover skill
             └── SKILL.md
 ```
 
-Two plugins, one marketplace, **different lifecycles**: `claude-project-bootstrap` is one-time *setup* (run once per repo); `engineering-craft` is ongoing *craft* (enabled permanently, used on every task). Separate plugins so a craft-skill fix doesn't re-pull setup tooling, and setup-only users aren't forced to take the craft skills. `engineering-craft` is **fork-and-adapt** from `mattpocock/skills` — see its `ATTRIBUTION.md` for the source commit and the adaptations (ADR/glossary paths, stripped AFK absence-detection, Project-contract issue creation). Skills there are **tool-agnostic discipline, never infrastructure**, so they land additively in repos with their own test setup.
+Two plugins, one marketplace, **different lifecycles**: `claude-project-bootstrap` is one-time *setup* (run once per repo); `engineering-craft` is ongoing *craft* (enabled permanently, used on every task). Separate plugins so a craft-skill fix doesn't re-pull setup tooling, and setup-only users aren't forced to take the craft skills. Most `engineering-craft` skills are **fork-and-adapt** from `mattpocock/skills` — see its `ATTRIBUTION.md` for the source commit and the adaptations (ADR/glossary paths, stripped AFK absence-detection, Project-contract issue creation); a few (e.g. `checkpoint`) are **homegrown** Claude-coding craft, not upstream. The **vendored** skills are **tool-agnostic discipline, never infrastructure**, so they land additively in repos with their own test setup.
 
 ## Hooks ship from the plugin (unlike templates)
 
