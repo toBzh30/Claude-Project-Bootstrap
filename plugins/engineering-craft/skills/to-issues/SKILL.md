@@ -56,7 +56,15 @@ Iterate until the user approves the breakdown.
 
 For each approved slice, follow the repo's `working-agreements.md` filing lifecycle: `gh issue create` with the right labels, then set the Project fields — `Area`, `Priority`, and **`Mode`** (the slice's AFK/HITL classification) — and report back as the lifecycle prescribes. The issue is auto-added to the Project.
 
-**If there's a parent** (a PRD issue, or a source issue you were handed), link each slice as a **sub-issue** of it — GitHub's native sub-issue relationship (`gh api -X POST repos/<owner>/<repo>/issues/<parent>/sub_issues -f sub_issue_id=<child-id>`), which drives the `Sub-issues progress` bar. With no parent, a flat issue is correct — sub-issues are optional, not required.
+**If there's a parent** (a PRD issue, or a source issue you were handed), link each slice as a **sub-issue** of it — GitHub's native sub-issue relationship, which drives the `Sub-issues progress` bar:
+
+```bash
+# sub_issue_id is the child's DATABASE id (.id) — NOT its issue number; -F sends it typed (int)
+child_id=$(gh api repos/<owner>/<repo>/issues/<child-number> --jq '.id')
+gh api -X POST repos/<owner>/<repo>/issues/<parent-number>/sub_issues -F sub_issue_id="$child_id"
+```
+
+With no parent, a flat issue is correct — sub-issues are optional, not required.
 
 Publish issues in dependency order (blockers first) so you can reference real issue numbers in the "Blocked by" field.
 
