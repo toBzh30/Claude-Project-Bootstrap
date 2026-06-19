@@ -1,6 +1,6 @@
 # Attribution
 
-**Most** skills in this plugin are vendored and adapted from **[mattpocock/skills](https://github.com/mattpocock/skills)** — © 2026 Matt Pocock, MIT-licensed (see [`LICENSE`](./LICENSE)). A few are **homegrown** and not derived from upstream (see *Homegrown* below).
+**Most** skills in this plugin are vendored and adapted from **[mattpocock/skills](https://github.com/mattpocock/skills)** — © 2026 Matt Pocock, MIT-licensed (see [`LICENSE-mattpocock`](./LICENSE-mattpocock)). A few are **homegrown** and not derived from upstream (see *Homegrown* below). The plugin's own original work is © 2026 toBzh30, MIT-licensed (see [`LICENSE`](./LICENSE)).
 
 - **Source:** `mattpocock/skills` at pinned commit `733d312884b3878a9a9cff693c5886943753a741`, `skills/engineering/`.
 - **Nature:** fork-and-**adapt**, not redistribution-unchanged. The skills are modified to fit this marketplace's conventions and the AFK/HITL execution model. Divergence from upstream is intentional.
