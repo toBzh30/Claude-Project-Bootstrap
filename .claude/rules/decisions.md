@@ -59,3 +59,9 @@ The *why* — separate from `working-agreements.md` (the *what*) and the GitHub 
 **Decision:** When a vertical slice spans repos, treat the other repo as a system boundary: tracer-bullet each side against a shared SDK-style contract (consumer mocks the provider at the contract; provider tested standalone), plus exactly one real cross-repo e2e proof per slice. Opt-in, gated on "slice spans repos" — single-repo repos never see it. (References #35)
 **Why:** Falls directly out of Matt's existing `mocking.md` rule ("mock at system boundaries, never what you control") — a separate repo *is* a boundary. The rejected alternative (one owning-repo e2e driving both real systems per slice) is slow, couples the two repos' test runs on every change, and contradicts mock-at-boundaries. The single real e2e is the only place mock drift gets caught. Tool-agnostic (Pact / shared-schema snapshot / scripted harness — team's call).
 **Status:** Active
+
+## 2026-06-19 — A PRD is a regular issue with sub-issues, not a doc/milestone/new entity
+
+**Decision:** `to-prd` publishes a PRD as an ordinary GitHub issue whose body is the PRD spec (`Mode = HITL`); its slices (via `to-issues`) become native **sub-issues** of it. Sub-issues are a universal capability of *any* issue — regular issue creation is unchanged and can decompose into sub-issues too. (References #35)
+**Why:** Keeps the existing setup intact — no new artifact type, no committed PRD doc (which would rot after fan-out and contradict the "no roadmap.md / no planning docs" decision), and no repurposing of milestones (those answer *when it ships*, a release axis orthogonal to *what we're building*). Everything is an issue; the `Parent issue` / `Sub-issues progress` fields already on the board give the hierarchy and a progress bar; the PRD closes naturally when its slices do.
+**Status:** Active
