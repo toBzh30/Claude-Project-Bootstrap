@@ -84,7 +84,7 @@ When ambiguous, ask. **Default-yes for discrete intent; default-no for housekeep
 | User mentions a discrete idea/bug/refactor | `gh issue create -t "<title>" -b "<body>" -l <labels>` (auto-added to project), **then immediately set the GitHub issue type if the org has them configured**: `gh api -X PATCH repos/<owner>/<repo>/issues/<N> -f type=<type-name>` (UI-filed issues pick up `type:` from `.github/ISSUE_TEMPLATE/*.yml` automatically). Set Project fields next: `<strategic-field>`, `Area`, `Priority`. Then report back: *"filed as #N — title, type=…, labels=…, `<strategic-field>`=…, Area=…, Priority=…, milestone=…. Anything you'd add?"* |
 | User says something ambiguously trackable | Ask first: *"Should I file this as an issue, or handle it inline?"* |
 | Substantive new feature surfaces | Ask 2–3 clarifying questions (*who uses this? what triggers it? what's the simplest version that ships?*), then `gh issue create` with a real body |
-| Picking up a tracked issue #N | Follow read → architect → plan → review → execute (see "How we work through issues"). **Don't run `git checkout -b` or flip Status until the user has signed off on the approach.** Once approved: `git checkout -b <type>/N-<slug>`, set Status → In Progress (`gh project item-edit … --field-id <Status> --single-select-option-id <In Progress>`), `gh issue comment N -b "<one-line plan>"`. |
+| Picking up a tracked issue #N | Follow read → architect → plan → review → execute → reconcile (see "How we work through issues"). **Don't run `git checkout -b` or flip Status until the user has signed off on the approach.** Once approved: `git checkout -b <type>/N-<slug>`, set Status → In Progress (`gh project item-edit … --field-id <Status> --single-select-option-id <In Progress>`), `gh issue comment N -b "<one-line plan>"`. |
 | Implementing | Read source first (narrow when possible), propose before destructive changes, verify before push |
 | Hit a blocker | Set Status → Blocked, `gh issue comment N -b "blocked on: <one-line reason>"` |
 | Out-of-scope item surfaces mid-PR | Push back, propose a new issue, `gh issue create …`, keep current PR focused |
@@ -120,9 +120,9 @@ across a handful of recent issues. If every sample returns `null`, types aren't 
 
 ## How we work through issues
 
-Tracked issues follow **read → architect → plan → review → execute**. The user drives intent; Claude proposes structure. The flow exists because going straight from `Status: Todo` to a PR produces sprawling diffs the user can't review.
+Tracked issues follow **read → architect → plan → review → execute → reconcile**. The user drives intent; Claude proposes structure. The flow exists because going straight from `Status: Todo` to a PR produces sprawling diffs the user can't review.
 
-### The five phases
+### The six phases
 
 1. **Read.** Issue body + comments. The linked code (the file the issue points at, plus its callers and tests). Relevant `<subdir>/CLAUDE.md`, `.claude/rules/<topic>.md`, and `decisions.md` entries that touch this area. **Skipping this is the #1 cause of "Claude proposed a fix that contradicts an already-documented constraint".**
 
@@ -141,6 +141,13 @@ Tracked issues follow **read → architect → plan → review → execute**. Th
    In both modes: **don't start implementing until the user signs off on the approach.** "Sign off" is explicit — *"yes, do it"* or *"start with step 1"*. Silence is not approval.
 
 5. **Execute.** `git checkout -b <type>/<N>-<slug>`, flip Status → In Progress, implement step-by-step. If a step turns out wrong mid-execution, surface it before continuing — don't silently improvise.
+
+6. **Reconcile docs.** Before you flip Status → Done, close the documentation loop — this is part of *done*, not a follow-up. The bundled `doc-gate.sh` hook prompts at `gh pr create`/`merge` when the diff changed code but touched no docs. Update, in the **same PR as the code**:
+   - `CLAUDE.md` / `<subdir>/CLAUDE.md` — if behavior or structure a future session would rely on changed.
+   - `ARCHITECTURE.md` (or whatever architecture doc the repo keeps) — if the change moved architecture: a new service boundary, data flow, or contract.
+   - `.claude/rules/decisions.md` — if the *why* would be non-obvious in 3 months.
+
+   If there's genuinely no doc impact, say so in the PR body — and re-run the gated command with `no docs needed` to pass the hook — so the next session knows it was considered, not forgotten.
 
 ### Example architect output
 
@@ -215,6 +222,7 @@ When this Project tracks issues across multiple repos under `<owner>` (multi-rep
 |---|---|
 | Component in `<subdir>/` moves from mock data → real API call | Status table in `<subdir>/CLAUDE.md` |
 | A "Pending" row in root `CLAUDE.md` ships | Move it to "Done" in the snapshot table (Project is live source — table is just a hint) |
+| Before flipping an issue to Done (Phase 6) | Reconcile docs in the same PR if code changed — `CLAUDE.md` / `ARCHITECTURE.md` / `.claude/rules/decisions.md`. The `doc-gate.sh` hook prompts at `gh pr create` if you forget |
 | Issue ships via PR | Close via `Closes #N` in PR body; if PR target ≠ default branch, manually `gh issue close N` |
 | Milestone bar fully met | `gh issue close <tracking-issue>` after verifying every sub-issue is closed |
 | New gotcha / constraint discovered in code | Append to that `<subdir>/CLAUDE.md` or relevant `.claude/rules/<topic>.md` |

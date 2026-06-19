@@ -48,7 +48,7 @@ Wait for explicit *"continue"* before proceeding. Don't proceed silently.
 
 ## Step 0.5 — Check `.gitignore` for `.claude/` patterns
 
-This skill writes durable rules under `.claude/rules/` that need to be committed. A directory-level ignore (`.claude/` with a trailing slash) silently excludes them — git can't re-include children of a fully-excluded directory, so `.claude/rules/working-agreements.md` won't show up in `git status` until someone notices.
+This skill commits three things under `.claude/`: durable rules in `.claude/rules/`, the plugin-enablement file `.claude/settings.json` (Step 6.5), and — via `github-project-setup` — `.claude/gh-project.json`. A directory-level ignore (`.claude/` with a trailing slash) silently excludes all of them — git can't re-include children of a fully-excluded directory, so they won't show up in `git status` until someone notices.
 
 ```bash
 grep -nE '^\.claude/?$' .gitignore 2>/dev/null
@@ -59,22 +59,24 @@ If a `.claude/` line is found, propose the carve-out fix — replace it with:
 ```
 .claude/*
 !.claude/rules/
+!.claude/settings.json
+!.claude/gh-project.json
 ```
 
-(plus a one-line comment: *"durable team contract committed; other Claude session state stays local"*). Wait for explicit user confirmation before editing — `.gitignore` changes affect what the team commits and shouldn't be silent.
+(plus a one-line comment: *"durable team contract + plugin config committed; other Claude session state stays local"*). Wait for explicit user confirmation before editing — `.gitignore` changes affect what the team commits and shouldn't be silent.
 
-After the fix, verify:
+After the fix, verify (`check-ignore` tests the rules even for paths that don't exist yet):
 
 ```bash
-git check-ignore -v .claude/rules/working-agreements.md
+git check-ignore -v .claude/rules/working-agreements.md .claude/settings.json .claude/gh-project.json
 ```
 
-Should report **NOT IGNORED** (no output, exit code 1).
+Each should report **NOT IGNORED** (no output, exit code 1).
 
 Three cases:
-- **`.gitignore` has `.claude/` (directory ignore)** → propose the carve-out, wait for confirmation, then edit.
-- **`.gitignore` has `.claude/*` already** → no change needed; the carve-out pattern is the desired state.
-- **`.gitignore` doesn't mention `.claude/` at all** → no change needed; rules will be tracked by default.
+- **`.gitignore` has `.claude/` (directory ignore)** → propose the carve-out (all three re-includes), wait for confirmation, then edit.
+- **`.gitignore` has `.claude/*` already** → ensure all three re-includes (`!.claude/rules/`, `!.claude/settings.json`, `!.claude/gh-project.json`) are present; add any that are missing.
+- **`.gitignore` doesn't mention `.claude/` at all** → no change needed; these files are tracked by default.
 
 If `.gitignore` doesn't exist, skip silently — the rules will be tracked by default.
 
@@ -352,6 +354,38 @@ Write each spoke. Confirm: *"Wrote `<subdir>/CLAUDE.md` as a starter — it has 
 
 ---
 
+## Step 6.5 — Activate the bundled plugin (turn on the hooks)
+
+The plugin ships three git/PR hooks — `preflight-branch` (collision guard before `<type>/<N>-` branch creation), `claim-branch` (assign `@me` + Project Status → In Progress), and `doc-gate` (the Phase 6 doc-reconcile prompt at `gh pr create`) — that enforce the discipline this skill just wrote into `working-agreements.md`. They only fire in a repo that **enables the plugin**. Commit that enablement so it travels with the repo (other machines, other contributors).
+
+Write (merge into) the repo's committed `.claude/settings.json`:
+
+```json
+{
+  "extraKnownMarketplaces": {
+    "claude-project-bootstrap": {
+      "source": "github",
+      "repo": "toBzh30/Claude-Project-Bootstrap"
+    }
+  },
+  "enabledPlugins": {
+    "claude-project-bootstrap@claude-project-bootstrap": true
+  }
+}
+```
+
+- `extraKnownMarketplaces` registers the marketplace this plugin came from; `enabledPlugins` turns the plugin on (key is `<plugin-id>@<marketplace-id>` — both are `claude-project-bootstrap`).
+- **If `.claude/settings.json` already exists, merge these two keys in — don't clobber existing settings.** Per-user overrides belong in `.claude/settings.local.json` (gitignored) — leave that file alone.
+- Adjust `repo` if the marketplace is published elsewhere (a fork or org mirror); it must be a repo collaborators can read.
+
+**Trust + activation:** project-level settings are honored only after a user accepts Claude Code's workspace-trust prompt for the repo (a cloned repo can supply this file, so it's gated). Once trusted, the hooks load on the **next session start** — not mid-session. Tell the user:
+
+> *"Committed `.claude/settings.json` enabling the plugin's hooks. They activate on the next Claude session in this repo (and for collaborators once they accept the workspace-trust prompt). `claim-branch` also needs `.claude/gh-project.json` — written by `github-project-setup` in Step 3 — to flip Project Status; without it that hook no-ops, the others still work."*
+
+The `.gitignore` carve-out from Step 0.5 already re-includes `.claude/settings.json`, so it commits.
+
+---
+
 ## Step 7 — Sanity check + handoff
 
 Run in parallel:
@@ -359,11 +393,14 @@ Run in parallel:
 ```bash
 wc -l CLAUDE.md .claude/rules/working-agreements.md .claude/rules/roadmap.md .claude/rules/decisions.md
 ls .github/ISSUE_TEMPLATE/
+test -f .claude/settings.json && echo "settings.json present" || echo "settings.json MISSING"
+git check-ignore .claude/settings.json .claude/gh-project.json && echo "WARNING: a plugin-config file is gitignored — fix the Step 0.5 carve-out" || echo "plugin-config files tracked"
 gh project view <N> --owner <owner> --format json --jq '{title, items: .items.totalCount, fields: [.fields[].name]}'
 ```
 
 Report back to the user as a single block:
 - Files created (with line counts)
+- **Plugin activated:** `.claude/settings.json` enables `claude-project-bootstrap` — hooks fire on the **next** session (and for collaborators after the workspace-trust prompt). Remind that `claim-branch`'s Status-flip needs `.claude/gh-project.json` (written in Step 3).
 - Project URL
 - Number of issues created (if a doc was migrated)
 - Milestones created (if any)
