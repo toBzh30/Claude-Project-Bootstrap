@@ -32,7 +32,7 @@ The *why* — separate from `working-agreements.md` (the *what*) and the GitHub 
 
 ## 2026-06-19 — AFK merge gate lives in config, not GitHub branch protection
 
-**Decision:** Whether an AFK issue auto-merges is read from `.claude/gh-project.json` → `conventions.afkMerge` (`auto-merge` | `review-required`, default `auto-merge`), honored by Claude. Branch protection is optional hardening, never the lever.
+**Decision:** Whether an AFK issue auto-merges is read from `.claude/gh-project.json` → `afk.merge` (`auto-merge` | `review-required`, default `auto-merge`), honored by Claude. Branch protection is optional hardening, never the lever. (Schema: `conventions` path-pointers are *not* added — bootstrap conventions are hardcoded since `engineering-craft` is a companion to bootstrap; only the `afk` policy block and the opt-in `externalTruth` key extend the file.)
 **Why:** Branch protection is unavailable on free private personal repos, so it can't be the universal team-review mechanism. In an AFK sweep Claude is the only actor merging, so a config flag Claude honors is sufficient and works on any plan/visibility. `Mode` stays a clean "who do I wait for" primitive; merge strictness is tuned independently (per-repo) via config. `/code-review` self-review runs in both modes, so `auto-merge` is machine-reviewed, not unreviewed.
 **Status:** Active
 
@@ -40,4 +40,10 @@ The *why* — separate from `working-agreements.md` (the *what*) and the GitHub 
 
 **Decision:** An AFK sweep processes issues one at a time (Priority desc, then issue-number asc); any downgrade trigger parks that single issue (flip `Mode → HITL`, comment) and the sweep continues. Parallel execution via worktrees is deferred.
 **Why:** Sequential composes with auto-merge — each issue branches from the updated `main`, so dependencies resolve for free and there's no two-PRs-racing-to-merge contention (matches the existing "only merges to `main` need to sequence" agreement). Parallel reintroduces stale-base/merge-conflict handling for marginal wall-clock gain on a queue you're already away from. Park-and-continue keeps one bad issue from sinking the whole unattended run.
+**Status:** Active
+
+## 2026-06-19 — AFK initiation is a strong convention, not a mechanical gate (for now)
+
+**Decision:** "Claude only starts an AFK sweep on an explicit user instruction, and never infers it from user silence/absence" is enforced as a strong working-agreements convention — *not* by a `/afk-sweep` command + PreToolUse hook. The mechanical initiation gate is deferred, not built.
+**Why:** The user accepts the soft-guardrail residual (ambiguous NL initiation, `/loop` drift, skill-local "proceed if AFK" text, context decay, cold sub-agents) because the blast radius is already bracketed at the *other* end by the merge gate (review-required / branch-protection can't be talked past) — an over-eager model can prepare PRs but not land them unreviewed. A hard initiation gate (explicit token + hook) stays a future opt-in if the convention proves leaky. On vendoring, Matt's craft skills' own "proceed if the user is AFK" absence-detection is **stripped** — only an explicitly-initiated sweep unlocks proceed-without-waiting; outside that, checkpoints wait (silence ≠ approval).
 **Status:** Active
