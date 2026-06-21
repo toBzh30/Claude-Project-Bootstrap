@@ -1,8 +1,10 @@
 {
   "extraKnownMarketplaces": {
     "claude-project-bootstrap": {
-      "source": "github",
-      "repo": "toBzh30/Claude-Project-Bootstrap"
+      "source": {
+        "source": "github",
+        "repo": "toBzh30/Claude-Project-Bootstrap"
+      }
     }
   },
   "enabledPlugins": {
