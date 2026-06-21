@@ -11,6 +11,7 @@ plugins/
 ├── claude-project-bootstrap/       # one-time project SETUP (run per new repo)
 │   ├── .claude-plugin/
 │   │   └── plugin.json          # plugin metadata (name, author)
+│   ├── LICENSE                  # our MIT license (© toBzh30)
 │   ├── hooks/                   # git/PR lifecycle hooks — auto-loaded in any repo where the plugin is enabled
 │   │   ├── hooks.json           # registers the hooks on Bash Pre/PostToolUse
 │   │   ├── preflight-branch.sh  # PreToolUse: collision guard before <type>/<N>- branch creation
@@ -31,8 +32,9 @@ plugins/
 └── engineering-craft/              # ongoing CRAFT skills (enabled permanently) — mostly vendored from mattpocock/skills (MIT), plus homegrown skills
     ├── .claude-plugin/
     │   └── plugin.json
-    ├── LICENSE                  # Matt Pocock's MIT license (vendored code)
-    ├── ATTRIBUTION.md           # source pinned commit + adaptations + what's not vendored
+    ├── LICENSE                  # our MIT license (© toBzh30) — the plugin's original work
+    ├── LICENSE-mattpocock       # Matt Pocock's MIT license (vendored skills)
+    ├── ATTRIBUTION.md           # source pinned commit + adaptations + vendored-vs-original
     └── skills/                  # vendored: zoom-out, diagnose, tdd, prototype, grill-with-docs, improve-codebase-architecture, to-issues, to-prd · homegrown: checkpoint
         ├── zoom-out/
         │   └── SKILL.md
