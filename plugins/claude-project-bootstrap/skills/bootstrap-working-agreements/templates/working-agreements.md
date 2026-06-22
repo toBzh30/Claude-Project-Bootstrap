@@ -96,27 +96,9 @@ When ambiguous, ask. **Default-yes for discrete intent; default-no for housekeep
 
 ### Setting Issue type
 
-`gh issue create` (as of v2.90) has no `--type` flag — set the GitHub-native Issue type via REST PATCH after creation:
+`gh issue create` has no `--type` flag — set the org's Issue type via REST PATCH after creation (command in the lifecycle filing row above; the type *name* goes in directly, no node-ID lookup). Map `bug` label → Bug, `feature` → Feature, else → Task. UI-filed issues pick up `type:` from `.github/ISSUE_TEMPLATE/*.yml` automatically; the PATCH is only for CLI-filed issues.
 
-```bash
-gh api -X PATCH repos/<owner>/<repo>/issues/<N> -f type=<type-name>
-```
-
-The PATCH accepts the type *name* directly — no GraphQL node-ID lookup needed. Map labels → type: `bug` label → Bug, `feature` label → Feature, otherwise → Task. UI-filed issues already pick up `type:` from `.github/ISSUE_TEMPLATE/*.yml`; the PATCH step is only needed for CLI-filed issues.
-
-Org type names configured for `<owner>` (filled in at bootstrap time): `<configured-issue-types>`. Re-query with:
-
-```bash
-gh api orgs/<owner>/issue-types --jq '[.[].name]'
-```
-
-This often 403s on fine-grained PATs lacking org admin scope. **Fallback** — sample existing issues to discover the configured set:
-
-```bash
-gh api repos/<owner>/<repo>/issues/<N> --jq '.type.name'
-```
-
-across a handful of recent issues. If every sample returns `null`, types aren't enabled at the org — owner must enable them in **Org Settings → Repository policies → Issue types** before the PATCH will succeed.
+Org types configured for `<owner>`: `<configured-issue-types>`. If they ever change, re-discover with `gh api orgs/<owner>/issue-types --jq '[.[].name]'` (403s on PATs without org-admin scope → sample recent issues' `.type.name` instead).
 
 ---
 
@@ -258,12 +240,7 @@ Tracking issues (`[milestone] X — <one-line bar>`) hold the bar + out-of-scope
 
 When this Project tracks issues across multiple repos under `<owner>` (multi-repo platform setup), every issue filed in *any* tracked repo must hit the Project board with these non-negotiables set at creation time. Without this contract, the cross-repo dimension breaks — sibling-repo issues either don't appear, or appear with critical fields blank, hiding work behind filter gaps.
 
-- **GitHub issue type** (whichever set the org has configured — typically `Bug` / `Feature` / `Task`) must be set on every issue. The org-level taxonomy — orthogonal to labels and shared across all repos in the org. Without it, the Project's Issue Type filter shows "no type" gaps that hide work. Title-prefix → type mapping convention seen in this org:
-  - `[bug]` → Bug
-  - `[feature]` → Feature
-  - (otherwise) → Task
-
-  Issue templates in `.github/ISSUE_TEMPLATE/` set type up-front via the `type:` key; CLI invocations follow with `gh api -X PATCH repos/<owner>/<repo>/issues/<N> -f type=<type-name>` (`gh` ≤ 2.90 has no native `--type` flag).
+- **GitHub issue type** must be set on *every* issue in *every* tracked repo (set it per *Setting Issue type* above). This is the multi-repo stakes: the org-level type taxonomy is shared across all repos, so one untyped issue anywhere shows up as a "no type" gap that hides work behind the Project's type filter.
 
 - **Strategic field** (`<strategic-field>` — typically `Initiative` for multi-repo Projects) must be set, even if the value is "Backlog". Filtering by `<strategic-field>` is how the Project surfaces "what's gating M1 across all repos".
 
