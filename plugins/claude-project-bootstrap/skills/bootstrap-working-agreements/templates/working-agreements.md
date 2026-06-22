@@ -209,6 +209,18 @@ When this Project tracks issues across multiple repos under `<owner>` (multi-rep
 
 ---
 
+## Multi-repo sync
+
+When you keep sibling clones side-by-side under one parent folder, be aware of **every** sibling at session start — not just the one you're working in. Stale clones cause stale handoff docs and "this function doesn't exist" surprises that are really sync drift, and a fresh session can pick up work already in flight on another repo/machine.
+
+- **Discover, don't enumerate:** `find <siblings-root> -maxdepth 2 -name .git -type d` — the set grows as services split out; never hardcode the list.
+- **Never pull onto a dirty tree or a non-default branch** — report the state, let the user decide what to pull.
+- **Concrete trigger:** first turn after `/clear`, first turn of a new session, or any turn that names a sibling repo. Get the cross-repo freshness picture before reading handoff docs or proposing cross-repo changes.
+
+The bundled `sibling-status.sh` SessionStart hook automates the *reporting* half of this (freshness per clone, plus optional cross-repo In-Progress + open PRs) — **opt-in, report-only, never mutates.** Enable it by writing `"siblings": { "sync": true }` (and optionally `"inflight": true`) into `.claude/gh-project.json`. The hook surfaces the picture; this rule is the judgment it can't encode.
+
+---
+
 ## Keeping docs current
 
 Doc-maintenance triggers *not* already covered by Phase 6 (reconcile-before-Done), the lifecycle table (shipping / decision-logging), or Branch strategy (`Closes #N`):
