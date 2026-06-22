@@ -157,7 +157,10 @@ Report as one block:
 - Per file: items pulled in, items the user skipped, "matches template" / "no changes".
 - Local-only sections that were left untouched (so the user knows they were considered).
 
-**Do not commit.** The user reviews the `git diff` and commits — same as the bootstrap skills.
+**Honor the repo's collaboration `Mode`** (from `working-agreements.md` → "Commits and merging") — this skill runs on an already-bootstrapped repo, so a `Mode` is established:
+
+- **Solo / `afk.merge: auto-merge`** — proceed: commit the reconcile, and if you're on an issue branch, open the PR and merge per the repo's policy after a `/code-review` self-review. A Solo repo expects you to land it, not hand back a diff.
+- **Team / `review-required`** — present the `git diff` summary and **stop**; the user reviews and commits.
 
 ---
 
