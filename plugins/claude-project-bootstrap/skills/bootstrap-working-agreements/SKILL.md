@@ -258,7 +258,7 @@ Read the bundled `templates/working-agreements.md`. Substitute these placeholder
 
 - **If `<project-scope>` = `single-repo`**, strip the entire `## Cross-repo Project contract` section (heading through trailing `---`). It's a multi-repo concept; including it on a single-repo project just adds noise.
 - **If the user had no answers to any sub-question of Step 2 question 8**, strip the entire `## Infrastructure boundaries` section. Half-filled placeholders are worse than no section.
-- **If the org has no GitHub issue types configured** (Step 4a returns no types), strip the entire `### Setting Issue type` subsection **and** strip the bolded "*then immediately set the GitHub issue type…*" clause from the lifecycle table's filing row (leave the rest of the row intact).
+- **If the org has no GitHub issue types configured** (Step 4a returns no types), strip the entire `### Setting Issue type` subsection, strip the bolded "*then immediately set the GitHub issue type…*" clause from the lifecycle table's filing row (leave the rest of the row intact), **and** strip the "**GitHub issue type**" bullet from the `## Cross-repo Project contract` section — it points at the now-removed subsection, so leaving it would dangle.
 
 **Do not substitute** the example branch names (`feat/4-user-auth`, `fix/22-rate-limit`, etc.) — they are illustrative of the *shape* of the convention, not project-specific. Leave them.
 
@@ -293,9 +293,9 @@ If the org uses non-standard type names (e.g. renamed `Feature` to `Story`), the
 
 ## Step 4b — Write `.claude/rules/decisions.md` starter
 
-`decisions.md` records *why* — separate from `working-agreements.md` (the *what*) and the GitHub Project (the *current state*). The format and "when to log" rules live in `working-agreements.md`; `decisions.md` itself is just the running log.
+`decisions.md` records *why* — separate from `working-agreements.md` (the *what*) and the GitHub Project (the *current state*). Its header carries the triggers, the three-line format, and the never-rewrite / split policy; `working-agreements.md` only points here. The running log accumulates below the header.
 
-Read the bundled `templates/decisions.md` and `Write` it to `.claude/rules/decisions.md` **with no substitutions** — it's a static starter (header + one HTML-comment-wrapped example entry). The user populates it as they make decisions worth logging.
+Read the bundled `templates/decisions.md` and `Write` it to `.claude/rules/decisions.md` **with no substitutions** — it's a static starter (header with the format spec + one HTML-comment-wrapped example entry). The user populates it as they make decisions worth logging.
 
 If `.claude/rules/decisions.md` already exists, **do not overwrite**. One-line confirmation: *"decisions.md exists — leaving it alone"*.
 
