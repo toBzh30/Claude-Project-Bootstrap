@@ -46,7 +46,7 @@ When ambiguous, ask. **Default-yes for discrete intent; default-no for housekeep
 **Tracked issues** → branch + PR.
 
 - Branch name: `<type>/<issue-num>-<slug>` — short, lowercase, hyphens. Real examples:
-  - `feat/4-zitadel-auth`
+  - `feat/4-user-auth`
   - `fix/22-rate-limit`
   - `chore/13-cdn-cache-headers`
   - `refactor/15-db-schema-split` (or `tech-debt/15-…`)
