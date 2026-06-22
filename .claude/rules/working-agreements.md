@@ -143,7 +143,7 @@ If you can't meet both conditions, you're past the trivial threshold — do the 
 The `engineering-craft` plugin ships discipline skills — `grill-with-docs`, `prototype`, `tdd`, `diagnose`, `to-issues`, `to-prd`, `improve-codebase-architecture`, `code-review`. They earn their keep when **offered at the right moment**, not only when the user names them. Each trigger below is deliberately narrow — the failure mode here is *nagging*, so a cue fires on a **named condition**, never "consider a craft skill at every phase." Calibrate to what the skill is *for*, not how often you could invoke it.
 
 **Three rules govern every cue:**
-- **Suggest once on the condition, then drop it** — a declined offer isn't re-offered (same restraint as *"silence is not approval"*).
+- **Suggest once per occurrence, then drop it** — a decline silences the cue *for that situation only*, never globally and never persisted. When the condition recurs (another fork, another bug, a later task) the cue is live again; never write a single "no" into a standing "don't suggest this skill." (Same restraint as *"silence is not approval"* — local to the moment.)
 - **Frame around the discipline, not the tool** — *"let's drive this test-first"* lands even in a repo that enabled bootstrap but not `engineering-craft` (the two plugins have separate lifecycles); the skill is just the vehicle.
 - **Honor the skills' own handoffs** — `diagnose` → `improve-codebase-architecture` (when the fix needs architectural change), `to-prd` → `to-issues` (slices), `prototype` → log the answer in `decisions.md`.
 
