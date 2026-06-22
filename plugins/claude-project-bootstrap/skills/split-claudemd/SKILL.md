@@ -162,7 +162,7 @@ Tell the user:
 - Final line count of the root (must be ≤200; ideally ≤150) plus per-spoke counts
 - A reminder that the per-subdir files only auto-load when Claude Code's cwd is inside that subtree — so guidance for working *across* subtrees stays in the root
 
-Do not commit. The user reviews the diff and commits themselves.
+**Committing:** during initial bootstrap there's no `Mode` yet — don't auto-commit; the user reviews the first scaffold. When run **standalone** on a repo with established conventions, honor its `Mode` (from `working-agreements.md`): Solo → commit/merge per the repo's policy after a `/code-review` self-review; Team → present the diff and stop.
 
 ---
 

@@ -407,7 +407,7 @@ Report back to the user as a single block:
 - Milestones created (if any)
 - Three things to verify in the GitHub UI: auto-add-to-project workflow, item-closed → Status:Done workflow, auto-archive after 2 weeks
 
-Do not commit. The user reviews the diff and commits.
+Do not commit — this is the **initial scaffold, before any `Mode` is established**, so the user always reviews and commits the first version (unlike post-bootstrap skills, which honor the repo's `Mode`).
 
 ---
 
