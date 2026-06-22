@@ -114,7 +114,7 @@ Tracked issues follow **read → architect → plan → review → execute → r
    - **Conversational** (default for novel or scope-fluid issues): back-and-forth across a few turns, refine the approach together before any code is written.
    - **Proposed-for-review** (default for well-scoped issues, or when the user wants to time-shift the discussion): write the full proposal as one message — usually as an issue comment so it persists alongside the issue. User reviews, refines, approves.
 
-   In both modes: **don't start implementing until the user signs off on the approach.** "Sign off" is explicit — *"yes, do it"* or *"start with step 1"*. Silence is not approval.
+   In both modes: **don't start implementing until the user signs off on the approach.** "Sign off" is explicit — *"yes, do it"* or *"start with step 1"*. Silence is not approval — and a *yes* to filing, or to a batch of items, approves the intent, not each item's design; if a fork or inter-item conflict is still open, surface it first (see Anti-patterns).
 
 5. **Execute.** `git checkout -b <type>/<N>-<slug>`, flip Status → In Progress, implement step-by-step. If a step turns out wrong mid-execution, surface it before continuing — don't silently improvise.
 
@@ -150,6 +150,7 @@ If you can't meet both conditions, you're past the trivial threshold — do the 
 - ***"I'll combine fixing this and improving that"*** — two issues, two PRs. Push back.
 - **Skipping the Read phase because *"I remember this code"*** — context decays between sessions. Read it again.
 - **Architect / plan but no review checkpoint** — implementing on inferred sign-off. Wait for an explicit *"go"*.
+- **Treating "yes" as a waiver of the design checkpoint** — *"yes, file these"* / *"go ahead"* approves the *intent*, not the *shape*. If you've found a genuine fork (the answer changes scope) or a conflict between the items you're proposing, **lead with it before filing or executing.** A conflict between two proposed items is the *strongest* trigger to grill, not a detail to bury in an issue body.
 
 ---
 
