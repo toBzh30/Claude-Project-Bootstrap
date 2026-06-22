@@ -293,9 +293,9 @@ If the org uses non-standard type names (e.g. renamed `Feature` to `Story`), the
 
 ## Step 4b — Write `.claude/rules/decisions.md` starter
 
-`decisions.md` records *why* — separate from `working-agreements.md` (the *what*) and the GitHub Project (the *current state*). The format and "when to log" rules live in `working-agreements.md`; `decisions.md` itself is just the running log.
+`decisions.md` records *why* — separate from `working-agreements.md` (the *what*) and the GitHub Project (the *current state*). Its header carries the triggers, the three-line format, and the never-rewrite / split policy; `working-agreements.md` only points here. The running log accumulates below the header.
 
-Read the bundled `templates/decisions.md` and `Write` it to `.claude/rules/decisions.md` **with no substitutions** — it's a static starter (header + one HTML-comment-wrapped example entry). The user populates it as they make decisions worth logging.
+Read the bundled `templates/decisions.md` and `Write` it to `.claude/rules/decisions.md` **with no substitutions** — it's a static starter (header with the format spec + one HTML-comment-wrapped example entry). The user populates it as they make decisions worth logging.
 
 If `.claude/rules/decisions.md` already exists, **do not overwrite**. One-line confirmation: *"decisions.md exists — leaving it alone"*.
 

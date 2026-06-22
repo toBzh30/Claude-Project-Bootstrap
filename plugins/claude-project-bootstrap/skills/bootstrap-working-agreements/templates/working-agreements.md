@@ -288,33 +288,7 @@ When this Project tracks issues across multiple repos under `<owner>` (multi-rep
 
 ## When to log a decision
 
-`.claude/rules/decisions.md` is the *why* — separate from this doc (the *what*) and the GitHub Project (the *current state*). When future-you wonders why a rule exists or why a path was rejected, that's where you look.
-
-**Add an entry when one of these triggers fires (concrete list — if none fits, the decision probably isn't load-bearing enough to log):**
-
-- A rule lands in this doc whose *why* would be non-obvious in 3 months. Example: *the Closes-keyword gotcha → Closes only fires on default-branch merges*.
-- A multi-week debate ended. Capture the resolution **and** the alternative considered, so it doesn't get re-litigated.
-- A pivot or scope change at the project level. Example: *moved from single-admin to multi-tenant on YYYY-MM-DD*.
-- A path *not* taken that someone might re-propose. Example: *considered server-side X, rejected — legal posture / latency / lock-in*.
-- A constraint that's load-bearing but invisible from the code. Example: *Anthropic truncates root `CLAUDE.md` at 200 lines — split is non-negotiable*.
-
-**Don't log:**
-- Routine implementation choices (variable names, file layout, library picks unless lasting consequence)
-- Decisions captured cleanly in a PR description or issue thread that nobody will re-litigate
-- Bug-fix rationale — the commit message is enough
-
-**Format — three-line shape, no full ADR ceremony:**
-
-```
-## YYYY-MM-DD — <one-line decision title>
-**Decision:** <one sentence>
-**Why:** <one or two sentences — the load-bearing reason, not the obvious context>
-**Status:** Active / Superseded by <YYYY-MM-DD entry> / Reversed
-```
-
-**Status field policy: never delete or rewrite an entry.** When a decision is overturned, leave the original (mark `Superseded by …` or `Reversed`) and add a new entry. The history is the value — without it, *"we already tried that, here's why we changed our mind"* is lost.
-
-**When to split to `decisions/` directory:** if `decisions.md` passes ~50 entries or scrolling becomes painful, split each entry into `decisions/YYYY-MM-DD-slug.md` and replace `decisions.md` with an index pointing at them. Single-file is the default; directory is the escape hatch.
+The *why* of a rule or a rejected path goes in `.claude/rules/decisions.md` — **its header carries the triggers, the three-line format, and the never-rewrite / split policy.** Log when a decision would otherwise get re-litigated or its rationale lost in 3 months; the lifecycle table's "Decision worth logging" row points here.
 
 ---
 
