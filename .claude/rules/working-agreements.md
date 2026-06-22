@@ -138,6 +138,34 @@ If you can't meet both conditions, you're past the trivial threshold — do the 
 
 ---
 
+## Craft skills — when to suggest one
+
+The `engineering-craft` plugin ships discipline skills — `grill-with-docs`, `prototype`, `tdd`, `diagnose`, `to-issues`, `to-prd`, `improve-codebase-architecture`, `code-review`. They earn their keep when **offered at the right moment**, not only when the user names them. Each trigger below is deliberately narrow — the failure mode here is *nagging*, so a cue fires on a **named condition**, never "consider a craft skill at every phase." Calibrate to what the skill is *for*, not how often you could invoke it.
+
+**Three rules govern every cue:**
+- **Suggest once on the condition, then drop it** — a declined offer isn't re-offered (same restraint as *"silence is not approval"*).
+- **Frame around the discipline, not the tool** — *"let's drive this test-first"* lands even in a repo that enabled bootstrap but not `engineering-craft` (the two plugins have separate lifecycles); the skill is just the vehicle.
+- **Honor the skills' own handoffs** — `diagnose` → `improve-codebase-architecture` (when the fix needs architectural change), `to-prd` → `to-issues` (slices), `prototype` → log the answer in `decisions.md`.
+
+**The cues** (⤴ = lean proactive — *you* forecast the condition rather than waiting; ↩ = reactive on the named signal):
+
+- ⤴ **`grill-with-docs`** — foreseen **branchy** uncertainty: interdependent decisions or a design tree to walk, cheaper to resolve by structured Q&A *before* executing than to discover mid-build. *Not:* a single isolated gap → ask one clarifying question; *"does this shape even work?"* → `prototype`.
+- ⤴ **`prototype`** — uncertainty that's **empirical**: state-machine / data-model behavior, or UI feel — where *seeing it run or rendered* beats reasoning on paper. *Not:* conceptual/branchy → `grill-with-docs`; a plain fact → ask.
+- ⤴ **`tdd`** (at execute) — about to implement **net-new or changed behavior that has a public seam**. *Not:* no seam (that absence is itself a finding → `improve-codebase-architecture`); a pure refactor, config, or docs change.
+- ↩ **`diagnose`** — a **non-trivial** bug or perf regression whose cause isn't obvious. *Not:* an obvious one-liner → just fix it (the full reproduce→hypothesise loop is overkill).
+- ⤴ **`to-issues`** (at plan) — a plan exceeds **one PR's worth** of independent work. *Not:* a single slice → file one issue.
+- **`to-prd`** (conservative) — an **initiative-scale** effort that needs a parent spec holding sub-issues. *Not:* anything smaller → `to-issues` or a single issue (a PRD on small work creates a competing intake path).
+- ↩ **`improve-codebase-architecture`** — a **coupling / no-seam smell** surfaces during `diagnose`, `tdd`, or Phase 6 reconcile. *Not:* a standalone "let's improve the architecture" — that stays user-initiated.
+
+**`code-review` — before a PR leaves your hands.** Run it on any **non-trivial** change, *for a human reviewer or for auto-merge alike*. Mode decides what happens **after** the review, not whether it runs:
+- **Solo / AFK `auto-merge`** → the review *is* the gate → merge.
+- **Team / `review-required`** → the review is pre-handoff polish → the human then reviews cleaner code.
+- **Either mode, trivia** (typo, one-line config, doc fix) → skip.
+
+Effort scales with size/risk (medium default; high for large or risky diffs). The value is the **cold-agent fan-out** — fresh reviewers catch what you, the author, are blind to — so don't substitute "re-read my own diff" for the real thing. (`zoom-out` is intentionally *not* cued: its frontmatter is `disable-model-invocation: true`, i.e. `/`-only by design.)
+
+---
+
 ## AFK vs HITL issues
 
 Every tracked issue carries a **`Mode`** (Project field: `HITL` default, or `AFK`) deciding whether Claude may work it **unattended**, under two gates:
@@ -151,7 +179,7 @@ Neither gate alone suffices. AFK is a **modifier on the six phases, not a replac
 
 **The sweep** — on explicit initiation, drain `AFK` issues **one at a time** (Priority desc, then issue # asc), each through the full lifecycle → PR → green CI + clean `/code-review` → the merge gate. **Sequential** (each branches from updated `main`, so dependencies resolve in order and no two PRs race to merge); **park-and-continue** (a downgrade trigger parks that issue, the sweep moves on); end with *"N merged, M parked, with reasons."*
 
-**The merge gate** — read from `.claude/gh-project.json` → `afk.merge`: **`auto-merge`** (default) green CI + clean self-review → `gh pr merge --auto --squash`; **`review-required`** open the PR and stop, a human merges (independent issues become reviewable PRs; dependent ones park on their predecessor's merge). A convention Claude honors, **independent of branch protection** (optional hardening, unavailable on some plans).
+**The merge gate** — read from `.claude/gh-project.json` → `afk.merge`: **`auto-merge`** (default) green CI + clean self-review → `gh pr merge --auto --squash`; **`review-required`** self-review the diff if non-trivial (per *Craft skills → `code-review`*), then open the PR and stop — a human merges (independent issues become reviewable PRs; dependent ones park on their predecessor's merge). A convention Claude honors, **independent of branch protection** (optional hardening, unavailable on some plans).
 
 **Downgrade-to-HITL triggers** (park: flip `Mode → HITL`, comment why, continue): (1) scope turns ambiguous; (2) out-of-scope work needed → file a new issue, park as *blocked-on-#new*; (3) architectural fork with no clear default; (4) irreversible/outward-facing step the issue didn't authorize; (5) `/code-review` finds a real bug, not a nit; (6) can't reach green CI / no test seam; (7) thrashing — 3 cycles without converging.
 
