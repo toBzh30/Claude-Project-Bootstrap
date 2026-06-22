@@ -271,17 +271,16 @@ When this Project tracks issues across multiple repos under `<owner>` (multi-rep
 
 ---
 
-## When to update what
+## Keeping docs current
+
+Doc-maintenance triggers *not* already covered by Phase 6 (reconcile-before-Done), the lifecycle table (shipping / decision-logging), or Branch strategy (`Closes #N`):
 
 | When (concrete trigger) | What to update |
 |---|---|
 | Component in `<subdir>/` moves from mock data → real API call | Status table in `<subdir>/CLAUDE.md` |
 | A "Pending" row in root `CLAUDE.md` ships | Move it to "Done" in the snapshot table (Project is live source — table is just a hint) |
-| Before flipping an issue to Done (Phase 6) | Reconcile docs in the same PR if code changed — `CLAUDE.md` / `ARCHITECTURE.md` / `.claude/rules/decisions.md`. The `doc-gate.sh` hook prompts at `gh pr create` if you forget |
-| Issue ships via PR | Close via `Closes #N` in PR body; if PR target ≠ default branch, manually `gh issue close N` |
 | Milestone bar fully met | `gh issue close <tracking-issue>` after verifying every sub-issue is closed |
 | New gotcha / constraint discovered in code | Append to that `<subdir>/CLAUDE.md` or relevant `.claude/rules/<topic>.md` |
-| Decision worth logging (see "When to log a decision") | Add entry to `.claude/rules/decisions.md` |
 | Stale fact found (a function renamed, a path moved) | Correct it in place — same commit as the rename if possible |
 
 ---
