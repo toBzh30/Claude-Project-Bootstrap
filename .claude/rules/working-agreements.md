@@ -8,15 +8,7 @@ The user drives **product intent** through conversation; **Claude maintains the 
 
 ## Make rules concrete, not aspirational
 
-Vague guidance ("be careful", "use judgment", "break this when needed") doesn't fire in practice. Concrete patterns are what trigger Claude to apply or override a rule at the right moment.
-
-When adding to this doc or any `.claude/rules/` file:
-- Name the specific situation, file, command, or pattern that triggers the rule.
-- If the rule has overrides, **list the exact situations** that justify breaking it — don't just say "use judgment".
-- Examples beat principles. *"Filter `gh issue list` with `--jq 'map({number, title})'` — default returns ~15KB"* beats *"filter command output"*.
-- If you can't think of a concrete trigger or counter-example, the rule probably isn't ready to write down.
-
-This rule applies recursively to itself — note the concrete examples in each bullet above.
+Vague guidance ("be careful", "use judgment") doesn't fire in practice — concrete patterns do. When adding to this doc or any `.claude/rules/` file: name the specific situation / file / command that triggers the rule; for overrides, **list the exact situations** that justify breaking it, not "use judgment"; lead with an example — *"filter `gh issue list` with `--jq 'map({number, title})'` — default returns ~15KB"* beats *"filter command output"*. If you can't name a concrete trigger or counter-example, the rule isn't ready to write down. (Applies to itself — note the example just used.)
 
 ---
 
@@ -78,24 +70,26 @@ When ambiguous, ask. **Default-yes for discrete intent; default-no for housekeep
 
 | Event | Claude does (exact commands) |
 |---|---|
-| User mentions a discrete idea/bug/refactor | `gh issue create -t "<title>" -b "<body>" -l <labels>` (auto-added to project). Set Project fields: `Area`, `Priority`. Then report back: *"filed as #N — title, labels=…, Area=…, Priority=…. Anything you'd add?"* |
+| User mentions a discrete idea/bug/refactor | `gh issue create -t "<title>" -b "<body>" -l <labels>` (auto-added to project). Set Project fields: `Area`, `Priority`, `Mode` (`HITL` unless the issue clears the AFK bar — see *AFK vs HITL issues*). Then report back: *"filed as #N — title, labels=…, Area=…, Priority=…, Mode=…. Anything you'd add?"* |
 | User says something ambiguously trackable | Ask first: *"Should I file this as an issue, or handle it inline?"* |
 | Substantive new feature surfaces | Ask 2–3 clarifying questions (*who uses this? what triggers it? what's the simplest version that ships?*), then `gh issue create` with a real body |
-| Picking up a tracked issue #N | Follow read → architect → plan → review → execute (see "How we work through issues"). **Don't run `git checkout -b` or flip Status until the user has signed off on the approach.** Once approved: `git checkout -b <type>/N-<slug>`, set Status → In Progress, `gh issue comment N -b "<one-line plan>"`. |
+| Picking up a tracked issue #N | Follow read → architect → plan → review → execute → reconcile (see "How we work through issues"). **Don't run `git checkout -b` or flip Status until the user has signed off on the approach.** Once approved: `git checkout -b <type>/N-<slug>`, set Status → In Progress, `gh issue comment N -b "<one-line plan>"`. |
 | Implementing | Read source first (narrow when possible), propose before destructive changes, verify before push |
 | Hit a blocker | Set Status → Blocked, `gh issue comment N -b "blocked on: <one-line reason>"` |
 | Out-of-scope item surfaces mid-PR | Push back, propose a new issue, `gh issue create …`, keep current PR focused |
 | Decision worth logging surfaces | Add an entry to `.claude/rules/decisions.md` per the format in "When to log a decision" |
 | Shipping | PR body ends with `Closes #N`, `gh pr merge <PR> --squash`; if target ≠ default branch, follow up with `gh issue close N` and flip Status to Done manually |
+| User explicitly says *"work through the AFK issues"* (or starts a `/loop`) | Run the **sweep**: drain `Mode = AFK` issues one at a time (Priority desc, then issue # asc), each through the full lifecycle → PR → green CI + clean `/code-review` → the `afk.merge` gate. Park-and-continue on any downgrade trigger. End with a report. **Never start this from user silence** — only an explicit instruction. See *AFK vs HITL issues*. |
+| AFK issue hits a downgrade trigger mid-sweep | Flip `Mode → HITL`, `gh issue comment N -b "parked: <one-line reason>"`, leave the branch/PR for the user, continue the sweep |
 | Stale items in Todo for weeks | Surface for user: *"#N has been Todo since <date> — still relevant or close as wontfix?"* — user makes the call, never auto-close |
 
 ---
 
 ## How we work through issues
 
-Tracked issues follow **read → architect → plan → review → execute**. The user drives intent; Claude proposes structure.
+Tracked issues follow **read → architect → plan → review → execute → reconcile**. The user drives intent; Claude proposes structure.
 
-### The five phases
+### The six phases
 
 1. **Read.** Issue body + comments. The linked code (the file the issue points at, plus its callers and tests). Relevant `plugins/CLAUDE.md`, `.claude/rules/<topic>.md`, and `decisions.md` entries that touch this area. **Skipping this is the #1 cause of "Claude proposed a fix that contradicts an already-documented constraint".**
 
@@ -111,9 +105,19 @@ Tracked issues follow **read → architect → plan → review → execute**. Th
    - **Conversational** (default for novel or scope-fluid issues): back-and-forth across a few turns, refine together before any code is written.
    - **Proposed-for-review** (default for well-scoped issues): write the full proposal as one message — usually as an issue comment so it persists. User reviews, refines, approves.
 
-   In both modes: **don't start implementing until the user signs off on the approach.** "Sign off" is explicit — *"yes, do it"* or *"start with step 1"*. Silence is not approval.
+   In both modes: **don't start implementing until the user signs off on the approach.** "Sign off" is explicit — *"yes, do it"* or *"start with step 1"*. Silence is not approval — and a *yes* to filing, or to a batch of items, approves the intent, not each item's design; if a fork or inter-item conflict is still open, surface it first (see Anti-patterns).
 
 5. **Execute.** `git checkout -b <type>/<N>-<slug>`, flip Status → In Progress, implement step-by-step. If a step turns out wrong mid-execution, surface it before continuing — don't silently improvise.
+
+6. **Reconcile docs.** Before you flip Status → Done, close the documentation loop — part of *done*, not a follow-up. The `doc-gate.sh` hook prompts at `gh pr create`/`merge` when the diff changed code but touched no docs. Update, in the **same PR as the code**: `plugins/CLAUDE.md` / the relevant `SKILL.md` if behaviour or structure a future session relies on changed; `.claude/rules/decisions.md` if the *why* would be non-obvious in 3 months. If there's genuinely no doc impact, say so in the PR body (and re-run the gated command with `no docs needed`) so the next session knows it was considered.
+
+### Example architect output
+
+> *Issue #N asks for X. Shape of the change:*
+> - **Changes:** `core/foo.py` (add `handle_x()`), `tests/test_foo.py` (3 cases)
+> - **Stays the same:** the public API at `services/api.py`, the DB schema
+> - **Alternative considered:** doing this at the API layer. Rejected because every endpoint would repeat the logic; `core/` is the single source of truth.
+> - **Out-of-scope risk:** noticed `services/legacy_foo.py` is dead code. Filing separately rather than cleaning up here.
 
 ### When to skip phases (trivial issues)
 
@@ -130,6 +134,26 @@ If you can't meet both conditions, you're past the trivial threshold — do the 
 - ***"I'll combine fixing this and improving that"*** — two issues, two PRs. Push back.
 - **Skipping the Read phase because *"I remember this code"*** — context decays between sessions. Read it again.
 - **Architect / plan but no review checkpoint** — implementing on inferred sign-off. Wait for an explicit *"go"*.
+- **Treating "yes" as a waiver of the design checkpoint** — *"yes, file these"* / *"go ahead"* approves the *intent*, not the *shape*. If you've found a genuine fork (the answer changes scope) or a conflict between the items you're proposing, **lead with it before filing or executing.** A conflict between two proposed items is the *strongest* trigger to grill, not a detail to bury in an issue body.
+
+---
+
+## AFK vs HITL issues
+
+Every tracked issue carries a **`Mode`** (Project field: `HITL` default, or `AFK`) deciding whether Claude may work it **unattended**, under two gates:
+
+1. **Eligibility** — `Mode = AFK` marks the issue *eligible*.
+2. **Initiation** — Claude starts an AFK sweep **only** on an explicit instruction (*"work through the AFK issues"* / a `/loop` you start). **Silence/absence is never initiation** (same invariant as *"silence is not approval"*).
+
+Neither gate alone suffices. AFK is a **modifier on the six phases, not a replacement**: inside an initiated sweep the phase-4 sign-off is **pre-authorized** (the tag *is* the approval), so architect→plan→execute run without pausing; `HITL` issues run the full flow unchanged.
+
+**Tagging `AFK`** — Claude sets `Mode` at file time and **reports it** (you can veto; default `HITL`, `AFK` is earned). The bar is the **inverse of the downgrade triggers below** — at file time Claude foresees none of them. Use the lightest method that clears it: immediate for clear/well-specified; a clarifying question or codebase read for mildly fuzzy; resolve via grilling for a genuine fork; leave `HITL` if it needs real-time judgment or touches prod.
+
+**The sweep** — on explicit initiation, drain `AFK` issues **one at a time** (Priority desc, then issue # asc), each through the full lifecycle → PR → green CI + clean `/code-review` → the merge gate. **Sequential** (each branches from updated `main`, so dependencies resolve in order and no two PRs race to merge); **park-and-continue** (a downgrade trigger parks that issue, the sweep moves on); end with *"N merged, M parked, with reasons."*
+
+**The merge gate** — read from `.claude/gh-project.json` → `afk.merge`: **`auto-merge`** (default) green CI + clean self-review → `gh pr merge --auto --squash`; **`review-required`** open the PR and stop, a human merges (independent issues become reviewable PRs; dependent ones park on their predecessor's merge). A convention Claude honors, **independent of branch protection** (optional hardening, unavailable on some plans).
+
+**Downgrade-to-HITL triggers** (park: flip `Mode → HITL`, comment why, continue): (1) scope turns ambiguous; (2) out-of-scope work needed → file a new issue, park as *blocked-on-#new*; (3) architectural fork with no clear default; (4) irreversible/outward-facing step the issue didn't authorize; (5) `/code-review` finds a real bug, not a nit; (6) can't reach green CI / no test seam; (7) thrashing — 3 cycles without converging.
 
 ---
 
@@ -141,45 +165,15 @@ If you can't meet both conditions, you're past the trivial threshold — do the 
 
 ---
 
-## When to update what
+## Keeping docs current
 
-| When (concrete trigger) | What to update |
-|---|---|
-| A skill's behaviour changes | Update the relevant `SKILL.md` in the same commit |
-| A "Pending" row in root `CLAUDE.md` ships | Move it to "Done" in the snapshot table (Project is live source — table is just a hint) |
-| Issue ships via PR | Close via `Closes #N` in PR body |
-| New gotcha / constraint discovered | Append to `plugins/CLAUDE.md` or relevant `.claude/rules/<topic>.md` |
-| Decision worth logging (see "When to log a decision") | Add entry to `.claude/rules/decisions.md` |
-| Stale fact found (a function renamed, a path moved) | Correct it in place — same commit as the rename if possible |
+The doc-maintenance trigger table lives in the root **`CLAUDE.md` → "Keeping these files current"** (skill behaviour → `SKILL.md`, new gotcha → `plugins/CLAUDE.md`, stale fact → fix in place, etc.) — single home, don't duplicate it here. Beyond that table: reconcile docs before flipping an issue to Done (Phase 6), and log a decision worth keeping (see below).
 
 ---
 
 ## When to log a decision
 
-`.claude/rules/decisions.md` is the *why* — separate from this doc (the *what*) and the GitHub Project (the *current state*).
-
-**Add an entry when one of these triggers fires:**
-- A rule lands in this doc whose *why* would be non-obvious in 3 months.
-- A multi-week debate ended. Capture the resolution **and** the alternative considered.
-- A pivot or scope change at the project level.
-- A path *not* taken that someone might re-propose.
-- A constraint that's load-bearing but invisible from the code.
-
-**Don't log:**
-- Routine implementation choices (variable names, file layout)
-- Decisions captured cleanly in a PR description or issue thread that nobody will re-litigate
-- Bug-fix rationale — the commit message is enough
-
-**Format:**
-
-```
-## YYYY-MM-DD — <one-line decision title>
-**Decision:** <one sentence>
-**Why:** <one or two sentences — the load-bearing reason, not the obvious context>
-**Status:** Active / Superseded by <YYYY-MM-DD entry> / Reversed
-```
-
-Never delete or rewrite an entry. When a decision is overturned, mark it `Superseded by …` and add a new entry.
+The *why* of a rule or a rejected path goes in `.claude/rules/decisions.md` — **its header carries the triggers, the three-line format, and the never-rewrite policy.** Log when a decision would otherwise get re-litigated or its rationale lost in 3 months; the lifecycle table's "Decision worth logging" row points here.
 
 ---
 
@@ -202,3 +196,11 @@ Break these when they conflict with correctness or you start thrashing. A wrong 
 - **Filter command output.** Pipe `gh ... --jq`, `grep`, `head`, `tail`. Default `gh issue list` returns ~15KB; with `--jq 'map({number, title})'` it's <2KB.
 - **One source of truth per question.** When `gh project item-list` answers it, don't also read the snapshot table in `CLAUDE.md`.
 - **For long sessions, suggest `/clear` between unrelated work.**
+
+### When to widen (don't ask permission — the discipline yields automatically)
+
+- **Debugging across files** — start wide (changed file + callers + failing path), narrow once the root cause is found.
+- **Refactoring a repeated pattern** — `grep` every call site and read them up front; peepholing invites inconsistency.
+- **First contact with an unfamiliar subsystem** — read the relevant `plugins/CLAUDE.md`, rules file, and entry-point source in full before narrowing.
+- **Three-strikes thrashing** — if you've said *"let me read a bit more of X"* three times, widen decisively.
+- **Surprising tool output** — a check/test failure on code you didn't touch: read enough to tell real regression from noise, don't filter it away.
