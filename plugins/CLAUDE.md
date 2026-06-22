@@ -13,10 +13,11 @@ plugins/
 │   │   └── plugin.json          # plugin metadata (name, author)
 │   ├── LICENSE                  # our MIT license (© toBzh30)
 │   ├── hooks/                   # git/PR lifecycle hooks — auto-loaded in any repo where the plugin is enabled
-│   │   ├── hooks.json           # registers the hooks on Bash Pre/PostToolUse
+│   │   ├── hooks.json           # registers the hooks on SessionStart + Bash Pre/PostToolUse
 │   │   ├── preflight-branch.sh  # PreToolUse: collision guard before <type>/<N>- branch creation
 │   │   ├── claim-branch.sh      # PostToolUse: assign @me + Status → In Progress (reads .claude/gh-project.json)
-│   │   └── doc-gate.sh          # PreToolUse: deny + direct Claude to update docs when a PR ships code but no docs
+│   │   ├── doc-gate.sh          # PreToolUse: deny + direct Claude to update docs when a PR ships code but no docs
+│   │   └── sibling-status.sh    # SessionStart: report-only cross-repo freshness + in-flight (opt-in: siblings.sync/.inflight)
 │   └── skills/
 │       ├── bootstrap-working-agreements/
 │       │   ├── SKILL.md         # orchestrator skill — calls the other two
@@ -46,7 +47,7 @@ Two plugins, one marketplace, **different lifecycles**: `claude-project-bootstra
 
 ## Hooks ship from the plugin (unlike templates)
 
-The three `hooks/` scripts are **not** copied into target repos — they run *from* the plugin install, so improvements trickle down on marketplace update (the opposite of templates). They activate in any repo whose committed settings enable this plugin. All three **fail open / no-op** when their tooling (`gh`, `jq`) or config is missing, so an enabled-but-unconfigured repo is never blocked. `claim-branch` is the only one needing per-repo config — it reads Project coordinates from `.claude/gh-project.json` (written by `github-project-setup` Step 4b) and no-ops entirely when that file is absent. `preflight-branch` and `doc-gate` need no config.
+The four `hooks/` scripts are **not** copied into target repos — they run *from* the plugin install, so improvements trickle down on marketplace update (the opposite of templates). They activate in any repo whose committed settings enable this plugin. All four **fail open / no-op** when their tooling (`gh`, `jq`, `git`) or config is missing, so an enabled-but-unconfigured repo is never blocked. Two need per-repo config in `.claude/gh-project.json` (written by `github-project-setup`): `claim-branch` reads the Project coordinates and no-ops when absent; `sibling-status` is doubly gated — it no-ops unless `siblings.sync == true`, so it's silent for every repo that hasn't explicitly opted in (the multi-repo, side-by-side case). `sibling-status` is **report-only** — it fetches but never merges/pulls/checks-out; it derives the siblings root from the session cwd's git toplevel (it runs from `${CLAUDE_PLUGIN_ROOT}`, outside any repo tree). `preflight-branch` and `doc-gate` need no config.
 
 ## Key constraint: templates are copied, not linked
 

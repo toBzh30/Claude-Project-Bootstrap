@@ -325,6 +325,16 @@ Wait for user confirmation before editing `.gitignore` (it changes what the team
 
 **Multi-repo note:** `claim-branch` resolves the issue's Project item by matching the *current repo* against `content.repository`, so one `.claude/gh-project.json` per tracked repo — all pointing at the same Project — is correct. Write it in each repo where the plugin is enabled.
 
+**Multi-repo only — offer the sibling-status hook.** If `<project-scope>` = `multi-repo`, this is the moment sibling coordination is established, so offer the opt-in `sibling-status.sh` SessionStart hook (report-only cross-repo freshness; never mutates). Ask in plain language — **not** jargon:
+
+> **See your other project folders' status at the start of each session?**
+> If you keep several related repos side-by-side in one folder (e.g. `~/Projects/app`, `~/Projects/api`), Claude can show you which ones are behind, dirty, or have work in progress — so you're not surprised by stale code. It only *reports*; it never changes anything. You can turn this off anytime.
+
+- Yes → add `"siblings": { "sync": true }` to `.claude/gh-project.json`. Then a follow-up: *"Also list the issues currently In Progress across your repos and open PRs here? (Reads the project board — costs a little GitHub API budget, self-limits when low.)"* — yes → `"siblings": { "sync": true, "inflight": true }`.
+- No / single-repo → write nothing; the hook stays inert.
+
+This only sets the local flag; the hook ships from the plugin and no-ops everywhere the flag is absent. Skip this offer entirely for `<project-scope>` = `single-repo`.
+
 ---
 
 ## Step 5 — Create the standard label set

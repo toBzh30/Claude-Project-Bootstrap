@@ -27,6 +27,7 @@ The plugin's **hooks, skills, and commands** auto-trickle when you update the ma
 | `.github/ISSUE_TEMPLATE/feature.yml` | `github-project-setup/templates/feature.yml` | Yes |
 | `.github/ISSUE_TEMPLATE/bug.yml` | `github-project-setup/templates/bug.yml` | Yes |
 | `.claude/settings.json` (`enabledPlugins`) | `bootstrap-working-agreements` Step 6.5 | Yes — retrofit missing plugin enablements (e.g. `engineering-craft`) |
+| `.claude/gh-project.json` (`siblings`) | `github-project-setup` Step 4b | Yes — retrofit the opt-in sibling-status hook flag (multi-repo, side-by-side setups) |
 
 **Deliberately out of scope** (a diff would be all noise — these are per-repo content, not shared convention): the root/spoke `CLAUDE.md` scaffolds, `.claude/rules/roadmap.md`, and the *body* of `.claude/rules/decisions.md`.
 
@@ -148,6 +149,26 @@ The current `bootstrap-working-agreements` Step 6.5 enables both:
 - `engineering-craft@claude-project-bootstrap` (ongoing craft skills)
 
 For any **missing** key, offer to add it — and ensure `extraKnownMarketplaces` has the `claude-project-bootstrap` entry so the marketplace resolves. Merge the key in with `Edit`; **don't clobber** other settings, and never touch `.claude/settings.local.json` (per-user, gitignored). A repo that deliberately wants setup-only can decline `engineering-craft` (it'll simply be re-offered on the next run — harmless). The newly-enabled plugin's skills load on the **next** Claude session.
+
+---
+
+## Step 2.6 — Offer the sibling-status hook (retrofit)
+
+This is the common path for the sibling-status SessionStart hook: a repo bootstrapped solo that *later* joined a multi-repo, side-by-side setup (siblings often aren't cloned when repo #1 is bootstrapped, so `github-project-setup`'s offer never fired). The hook ships from the plugin and is inert until a local flag turns it on.
+
+Check whether it's already opted in:
+
+```bash
+jq -r '.siblings // "absent"' .claude/gh-project.json 2>/dev/null
+```
+
+If `.claude/gh-project.json` is absent, skip (the repo hasn't run `github-project-setup` Step 4b). If `siblings.sync` is already `true`, report "already on" and skip. Otherwise offer it in plain language:
+
+> **See your other project folders' status at the start of each session?**
+> If you keep several related repos side-by-side in one folder, Claude can show you which ones are behind, dirty, or have work in progress — so you're not surprised by stale code. It only *reports*; it never changes anything. Turn off anytime.
+
+- Yes → merge `"siblings": { "sync": true }` into `.claude/gh-project.json` with `Edit` (don't clobber `project`/`afk`). Then offer the in-flight board surface as a follow-up → add `"inflight": true`.
+- No → write nothing.
 
 ---
 
