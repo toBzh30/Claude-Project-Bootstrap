@@ -8,15 +8,7 @@ The user drives **product intent** through conversation; **Claude maintains the 
 
 ## Make rules concrete, not aspirational
 
-Vague guidance ("be careful", "use judgment", "break this when needed") doesn't fire in practice. Concrete patterns are what trigger Claude to apply or override a rule at the right moment.
-
-When adding to this doc or any `.claude/rules/` file:
-- Name the specific situation, file, command, or pattern that triggers the rule.
-- If the rule has overrides, **list the exact situations** that justify breaking it — don't just say "use judgment".
-- Examples beat principles. *"Filter `gh issue list` with `--jq 'map({number, title})'` — default returns ~15KB"* beats *"filter command output"*.
-- If you can't think of a concrete trigger or counter-example, the rule probably isn't ready to write down.
-
-This rule applies recursively to itself — note the concrete examples in each bullet above.
+Vague guidance ("be careful", "use judgment") doesn't fire in practice — concrete patterns do. When adding to this doc or any `.claude/rules/` file: name the specific situation / file / command that triggers the rule; for overrides, **list the exact situations** that justify breaking it, not "use judgment"; lead with an example — *"filter `gh issue list` with `--jq 'map({number, title})'` — default returns ~15KB"* beats *"filter command output"*. If you can't name a concrete trigger or counter-example, the rule isn't ready to write down. (Applies to itself — note the example just used.)
 
 ---
 
@@ -301,7 +293,7 @@ If a task appears to require violating any of these, surface the conflict before
 
 ## Token efficiency
 
-Habits to apply by default — but **break them the moment they conflict with correctness or you start thrashing**. If a narrow read makes debugging harder because you keep needing more context, widen the read. If filtering a log line hides the actual error, dump more of it. If you're guessing because you starved yourself of context, you've optimised for the wrong thing — re-reads are cheap, wrong fixes are expensive.
+Habits to apply by default — but **break them the moment they conflict with correctness or you start thrashing**: re-reads are cheap, wrong fixes are expensive. If a narrow read makes debugging harder, widen it; if filtering hides the actual error, dump more.
 
 - **Read narrowly.** When you know the section you need, use `Read` with `offset`/`limit` instead of reading the whole file. Most edits to large files (`<example-large-file-1>`, `<example-large-file-2>`) only need 30–50 lines of context.
 - **Don't re-read files you just edited.** The harness tracks state after `Edit`/`Write` succeed; re-reading to "verify" the edit duplicates hundreds of lines into context for nothing.
@@ -311,12 +303,10 @@ Habits to apply by default — but **break them the moment they conflict with co
 - **For long sessions, suggest `/clear` between unrelated work.** History accumulates and every turn carries it. Picking up issue #Y after shipping #X with no shared context is cheaper in a fresh session than a 100-turn one.
 - **Don't paste full backend logs or build output into prompts.** Tail the relevant lines or `grep` for the error pattern. Same for test failures, dep-install logs, etc.
 
-### Common override situations — widen by default
+### When to widen (don't ask permission — the discipline yields automatically)
 
-Don't ask permission for these; the discipline above yields automatically:
-
-- **Debugging across files.** Start wide (the changed file + its callers + the failing path) and narrow once the root cause is identified. A wrong fix from a too-narrow read costs more than the re-read would have.
-- **Refactoring a pattern used in many places.** `grep` for every call site first; read them all up front. Peepholing one site at a time invites inconsistency.
-- **First contact with an unfamiliar subsystem.** Read the relevant `<subdir>/CLAUDE.md`, the related rules file, and the entry-point source file in full before narrowing. Tacit conventions live in surrounding code, not in the line you'd be tempted to jump straight to.
-- **Three-strikes thrashing.** If you've asked *"let me read a bit more of X"* three times in a row, widen decisively instead of iterating. The narrow-then-widen-then-narrow-again loop costs more total than one honest wider read.
-- **Surprising tool output that doesn't match the change.** If a typecheck fails on a file you didn't edit, or a test breaks for an unrelated reason, don't filter it away — read enough to tell whether it's a real regression you caused or genuine noise to ignore.
+- **Debugging across files** — start wide (changed file + callers + failing path), narrow once the root cause is found.
+- **Refactoring a repeated pattern** — `grep` every call site and read them up front; peepholing invites inconsistency.
+- **First contact with an unfamiliar subsystem** — read the relevant `<subdir>/CLAUDE.md`, rules file, and entry-point source in full before narrowing; tacit conventions live in surrounding code.
+- **Three-strikes thrashing** — if you've said *"let me read a bit more of X"* three times, widen decisively.
+- **Surprising tool output** — a typecheck/test failure on code you didn't touch: read enough to tell real regression from noise, don't filter it away.
