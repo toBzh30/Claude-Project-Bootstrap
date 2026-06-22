@@ -205,6 +205,8 @@ When this Project tracks issues across multiple repos under `<owner>` (multi-rep
 
 - **Area** must be set. Areas are codebase-axis (Frontend / Backend / Infra) and let you see "everything backend across the platform" regardless of which repo holds it.
 
+**GraphQL budget on a shared board.** GitHub's GraphQL API is ~5,000 points/user/hour (per *user* — shared across every session, hook, and machine; paid plans don't raise it). `gh project item-list <N> --owner <owner> --limit 1000` pulls every item × every field — thousands of points — and a couple of those drain the hour, after which `gh pr create` / `gh issue create` (both GraphQL) fail until it resets. The risk is acute on a cross-repo board (many items). So never casually scan the board — use the cheap per-issue `projectItems` query (see *Token efficiency*). **REST survives a drain:** `gh api repos/<owner>/<repo>/issues -f title=… -F body=@file -f "labels[]=…"` creates issues; PR creation has no `gh` REST shortcut, but `gh api repos/<owner>/<repo>/pulls -f title=… -f head=… -f base=<integration-branch> -F body=@file` works.
+
 ---
 
 ## Keeping docs current
@@ -267,6 +269,7 @@ Habits to apply by default — but **break them the moment they conflict with co
 - **Filter command output.** Pipe `gh ... --jq`, `grep`, `head`, `tail` to extract just the relevant fields. Default `gh issue list` returns ~15KB; with `--jq 'map({number, title})'` it's <2KB.
 - **Filter typecheck and lint to the file you changed.** `tsc -b 2>&1 | grep MyFile.tsx` rather than dumping all pre-existing errors in unrelated files.
 - **One source of truth per question.** When `gh project item-list` answers it, don't also read the snapshot table in `CLAUDE.md` — pick one.
+- **Don't scan the whole board to find one item.** To get an issue's Project item id, query its `projectItems` directly (~1 GraphQL point) — `gh api graphql -f query='query($n:Int!){repository(owner:"<owner>",name:"<repo>"){issue(number:$n){projectItems(first:5){nodes{id project{number}}}}}}' -F n=<N>` — never `gh project item-list` to find it (that pulls every item × every field). Reuse the static field/option IDs already saved in `.claude/gh-project.json` rather than re-discovering via `field-list`. `gh api rate_limit` is free — check `.resources.graphql.remaining` before a board op if a prior call failed with "API rate limit exceeded".
 - **For long sessions, suggest `/clear` between unrelated work.** History accumulates and every turn carries it. Picking up issue #Y after shipping #X with no shared context is cheaper in a fresh session than a 100-turn one.
 - **Don't paste full backend logs or build output into prompts.** Tail the relevant lines or `grep` for the error pattern. Same for test failures, dep-install logs, etc.
 
