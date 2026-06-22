@@ -198,7 +198,7 @@ Tracking issues (`[milestone] X — <one-line bar>`) hold the bar + out-of-scope
 
 When this Project tracks issues across multiple repos under `<owner>` (multi-repo platform setup), every issue filed in *any* tracked repo must hit the Project board with these non-negotiables set at creation time. Without this contract, the cross-repo dimension breaks — sibling-repo issues either don't appear, or appear with critical fields blank, hiding work behind filter gaps.
 
-- **GitHub issue type** must be set on *every* issue in *every* tracked repo (set it per *Setting Issue type* above). This is the multi-repo stakes: the org-level type taxonomy is shared across all repos, so one untyped issue anywhere shows up as a "no type" gap that hides work behind the Project's type filter.
+- **GitHub issue type** must be set on *every* issue in *every* tracked repo (set it per *Setting Issue type* above; title-prefix convention: `[bug]` → Bug, `[feature]` → Feature, else → Task). This is the multi-repo stakes: the org-level type taxonomy is shared across all repos, so one untyped issue anywhere shows up as a "no type" gap that hides work behind the Project's type filter.
 
 - **Strategic field** (`<strategic-field>` — typically `Initiative` for multi-repo Projects) must be set, even if the value is "Backlog". Filtering by `<strategic-field>` is how the Project surfaces "what's gating M1 across all repos".
 
