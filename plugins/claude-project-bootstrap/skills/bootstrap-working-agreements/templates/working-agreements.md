@@ -155,54 +155,20 @@ If you can't meet both conditions, you're past the trivial threshold — do the 
 
 ## AFK vs HITL issues
 
-Every tracked issue carries a **`Mode`** (Project field: `HITL` default, or `AFK`). `Mode` decides whether Claude may work the issue **unattended** — under two gates, the second of which is **never inferred**:
+Every tracked issue carries a **`Mode`** (Project field: `HITL` default, or `AFK`) deciding whether Claude may work it **unattended**, under two gates:
 
-1. **Eligibility** — `Mode = AFK` marks the issue *eligible* to run unattended.
-2. **Initiation** — Claude starts an AFK sweep **only** on an explicit instruction (*"work through the AFK issues"*, or a `/loop` you start). **User silence/absence is never initiation** — going quiet does not authorize Claude to begin (same invariant as *"silence is not approval"*).
+1. **Eligibility** — `Mode = AFK` marks the issue *eligible*.
+2. **Initiation** — Claude starts an AFK sweep **only** on an explicit instruction (*"work through the AFK issues"* / a `/loop` you start). **Silence/absence is never initiation** (same invariant as *"silence is not approval"*).
 
-Neither gate alone suffices: an `AFK`-tagged issue sits untouched until you explicitly initiate; an explicit *"go"* only reaches `AFK`-tagged issues.
+Neither gate alone suffices. AFK is a **modifier on the six phases, not a replacement**: inside an initiated sweep the phase-4 sign-off is **pre-authorized** (the tag *is* the approval), so architect→plan→execute run without pausing; `HITL` issues run the full flow unchanged.
 
-This is a **modifier on the six phases, not a replacement.** For an `AFK` issue inside an initiated sweep, the phase-4 sign-off checkpoints are **pre-authorized** (the tag *is* the up-front approval); architect→plan→execute run without pausing. `HITL` issues run the full flow unchanged.
+**Tagging `AFK`** — Claude sets `Mode` at file time and **reports it** (you can veto; default `HITL`, `AFK` is earned). The bar is the **inverse of the downgrade triggers below** — at file time Claude foresees none of them. Use the lightest method that clears it: immediate for clear/well-specified; a clarifying question or codebase read for mildly fuzzy; resolve via grilling for a genuine fork; leave `HITL` if it needs real-time judgment or touches prod.
 
-### When Claude tags an issue `AFK`
+**The sweep** — on explicit initiation, drain `AFK` issues **one at a time** (Priority desc, then issue # asc), each through the full lifecycle → PR → green CI + clean `/code-review` → the merge gate. **Sequential** (each branches from updated `main`, so dependencies resolve in order); **park-and-continue** (a downgrade trigger parks that issue, the sweep moves on); end with *"N merged, M parked, with reasons."*
 
-The eligibility bar is the **inverse of the downgrade triggers** below — at file time Claude foresees *none* of them: scope unambiguous, no unresolved architectural fork, no irreversible/outward-facing step, a plausible test seam, bounded. Use the **lightest method** that clears the bar — grilling is not a per-issue tax:
+**The merge gate** — read from `.claude/gh-project.json` → `afk.merge`: **`auto-merge`** (default) green CI + clean self-review → `gh pr merge --auto --squash`; **`review-required`** open the PR and stop, a human merges. A convention Claude honors, **independent of branch protection** (optional hardening, unavailable on some plans).
 
-| How clear at file time | Path to `AFK` |
-|---|---|
-| Already clear (trivial or well-specified) | tag `AFK` immediately |
-| Mildly fuzzy | a clarifying question, or read the codebase, then `AFK` |
-| Genuinely contested (competing designs / unresolved fork) | resolve it (e.g. a grilling session) → `AFK` |
-| Unresolvable without real-time judgment, or touches prod | leave `HITL` |
-
-Claude sets `Mode` when filing and **reports it** (you can veto). Default `HITL` — `AFK` is earned.
-
-### The sweep
-
-On an explicit initiation, Claude drains `AFK`-eligible issues **one at a time**, ordered **Priority desc, then issue number asc**. Each issue runs the full lifecycle → opens a PR → green CI + a clean `/code-review` self-review → the merge gate.
-
-- **Sequential, not parallel** — each issue branches from the updated `main`, so dependencies resolve in order and no two PRs race to merge.
-- **Park-and-continue** — a downgrade trigger parks *that* issue and the sweep moves on; one issue never sinks the run.
-- **End-of-run report** — *"N merged, M parked for you, with reasons."*
-
-### The merge gate (`afk.merge`)
-
-Read from `.claude/gh-project.json` → `afk.merge`:
-
-- **`auto-merge`** (default) — green CI + clean self-review → `gh pr merge --auto --squash`.
-- **`review-required`** — open the PR, request review, **do not** arm `--auto`; a human merges. Independent issues become reviewable PRs; dependent ones park on their predecessor's merge.
-
-`afk.merge` is a convention Claude honors, **independent of GitHub branch protection** (unavailable on some plans/visibilities). Branch protection, where available, is optional hardening on top.
-
-### Downgrade-to-HITL triggers (park: flip `Mode → HITL`, comment why, continue the sweep)
-
-1. Scope turns ambiguous (two+ materially different implementations).
-2. Out-of-scope work is required → file a new issue, park the original as *blocked-on-#new* (never smuggle).
-3. Architectural fork with no clear default (a `decisions.md`-worthy choice).
-4. Irreversible / outward-facing step the issue didn't authorize.
-5. The `/code-review` self-review finds a real correctness bug (not a nit).
-6. Can't reach green CI / no correct test seam.
-7. Thrashing guard — 3 cycles without converging.
+**Downgrade-to-HITL triggers** (park: flip `Mode → HITL`, comment why, continue): (1) scope turns ambiguous; (2) out-of-scope work needed → file a new issue, park as *blocked-on-#new*; (3) architectural fork with no clear default; (4) irreversible/outward-facing step the issue didn't authorize; (5) `/code-review` finds a real bug, not a nit; (6) can't reach green CI / no test seam; (7) thrashing — 3 cycles without converging.
 
 ---
 
