@@ -260,7 +260,7 @@ Read the bundled `templates/working-agreements.md`. Substitute these placeholder
 - **If the user had no answers to any sub-question of Step 2 question 8**, strip the entire `## Infrastructure boundaries` section. Half-filled placeholders are worse than no section.
 - **If the org has no GitHub issue types configured** (Step 4a returns no types), strip the entire `### Setting Issue type` subsection, strip the bolded "*then immediately set the GitHub issue type…*" clause from the lifecycle table's filing row (leave the rest of the row intact), **and** strip the "**GitHub issue type**" bullet from the `## Cross-repo Project contract` section — it points at the now-removed subsection, so leaving it would dangle.
 
-**Do not substitute** the example branch names (`feat/4-user-auth`, `fix/22-rate-limit`, etc.) — they are illustrative of the *shape* of the convention, not project-specific. Leave them.
+**Do not substitute** the example branch names (`feat/4-user-auth`, `fix/22-rate-limit`, etc.) — they are illustrative of the *shape* of the convention, not project-specific. Leave them. Likewise the Multi-repo-sync discovery command is intentionally relative (`find ..`) — never replace it with an absolute siblings path (no `/Users/...`, `/home/...`); it must stay host-agnostic.
 
 Write the file. Then `mkdir -p .claude/rules/` first if needed (it usually already exists from `github-project-setup`).
 

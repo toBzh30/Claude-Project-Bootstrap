@@ -241,7 +241,7 @@ When this Project tracks issues across multiple repos under `<owner>` (multi-rep
 
 When you keep sibling clones side-by-side under one parent folder, be aware of **every** sibling at session start — not just the one you're working in. Stale clones cause stale handoff docs and "this function doesn't exist" surprises that are really sync drift, and a fresh session can pick up work already in flight on another repo/machine.
 
-- **Discover, don't enumerate:** `find <siblings-root> -maxdepth 2 -name .git -type d` — the set grows as services split out; never hardcode the list.
+- **Discover, don't enumerate:** from the repo root, `find .. -maxdepth 2 -name .git -type d` (sibling clones sit under the same parent folder) — the set grows as services split out, so never hardcode the list; and the path is deliberately relative (`..`), never an absolute machine path, so it works on any host or layout.
 - **Never pull onto a dirty tree or a non-default branch** — report the state, let the user decide what to pull.
 - **Concrete trigger:** first turn after `/clear`, first turn of a new session, or any turn that names a sibling repo. Get the cross-repo freshness picture before reading handoff docs or proposing cross-repo changes.
 
