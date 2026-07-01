@@ -73,6 +73,7 @@ When ambiguous, ask. **Default-yes for discrete intent; default-no for housekeep
 | User mentions a discrete idea/bug/refactor | `gh issue create -t "<title>" -b "<body>" -l <labels>` (auto-added to project). Set Project fields: `Area`, `Priority`, `Mode` (`HITL` unless the issue clears the AFK bar — see *AFK vs HITL issues*). Then report back: *"filed as #N — title, labels=…, Area=…, Priority=…, Mode=…. Anything you'd add?"* |
 | User says something ambiguously trackable | Ask first: *"Should I file this as an issue, or handle it inline?"* |
 | Substantive new feature surfaces | Ask 2–3 clarifying questions (*who uses this? what triggers it? what's the simplest version that ships?*), then `gh issue create` with a real body |
+| Prototype you decide to keep | Building an unfiled prototype first is fine — but the moment it's *"yes, we're keeping this,"* `gh issue create` for it and open a PR **promptly**. Don't let kept work accumulate untracked; the keep-decision is the trigger, not "later." |
 | Picking up a tracked issue #N | Follow read → architect → plan → review → execute → reconcile (see "How we work through issues"). **Don't run `git checkout -b` or flip Status until the user has signed off on the approach.** Once approved: `git checkout -b <type>/N-<slug>`, set Status → In Progress, `gh issue comment N -b "<one-line plan>"`. |
 | Implementing | Read source first (narrow when possible), propose before destructive changes, verify before push |
 | Hit a blocker | Set Status → Blocked, `gh issue comment N -b "blocked on: <one-line reason>"` |
@@ -145,7 +146,7 @@ The `engineering-craft` plugin ships discipline skills — `grill-with-docs`, `p
 **Three rules govern every cue:**
 - **Suggest once per occurrence, then drop it** — a decline silences the cue *for that situation only*, never globally and never persisted. When the condition recurs (another fork, another bug, a later task) the cue is live again; never write a single "no" into a standing "don't suggest this skill." (Same restraint as *"silence is not approval"* — local to the moment.)
 - **Frame around the discipline, not the tool** — *"let's drive this test-first"* lands even in a repo that enabled bootstrap but not `engineering-craft` (the two plugins have separate lifecycles); the skill is just the vehicle.
-- **Honor the skills' own handoffs** — `diagnose` → `improve-codebase-architecture` (when the fix needs architectural change), `to-prd` → `to-issues` (slices), `prototype` → log the answer in `decisions.md`.
+- **Honor the skills' own handoffs** — `diagnose` → `improve-codebase-architecture` (when the fix needs architectural change), `to-prd` → `to-issues` (slices), `prototype` → log the answer in `decisions.md` (and if you're keeping the prototype, file the issue + PR it promptly — see the lifecycle table).
 
 **The cues** (⤴ = lean proactive — *you* forecast the condition rather than waiting; ↩ = reactive on the named signal):
 
