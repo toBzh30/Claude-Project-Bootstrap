@@ -22,7 +22,7 @@
 
 ## Original work (not derived from upstream)
 
-The adaptations above and the **integration wiring** into the (fully original) `claude-project-bootstrap` plugin are original work © 2026 toBzh30, layered on Matt's MIT base. Matt's skills are the *basis*, not a 1:1 copy; the integration is ours.
+The adaptations above and the **integration wiring** into the `claude-project-bootstrap` plugin are original work © 2026 toBzh30, layered on Matt's MIT base. Matt's skills are the *basis*, not a 1:1 copy; the integration is ours.
 
 On **AFK/HITL** specifically, the line runs through the middle: the *terminology* and the idea of classifying work as AFK-able vs human-in-the-loop are upstream (Matt's `to-issues` slices carry `Type: HITL / AFK`; his `triage` has an AFK-ready label; his skills proceed on detected user absence). Original here is the **governance layer** built on that vocabulary — `Mode` as a Project field, authorize ≠ initiate (only an explicit human instruction starts a sweep; silence never does), the sequential sweep with park-and-continue and downgrade triggers, and the config-driven merge gate — which deliberately *inverts* upstream's "prefer AFK / proceed on absence" default.
 
