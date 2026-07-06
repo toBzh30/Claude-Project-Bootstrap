@@ -23,7 +23,7 @@ Two plugins ship from this marketplace.
 
 It also installs git/PR hooks (`preflight-branch`, `claim-branch`, `doc-gate`, `sibling-status`) that enforce the lifecycle at the git boundary — claim an issue when you branch, block a code PR that skips its docs, surface cross-repo drift at session start.
 
-**`engineering-craft`** — ongoing engineering & Claude-coding *craft*. Discipline skills you reach for as the work calls for them:
+**`engineering-craft`** — ongoing engineering & Claude-coding *craft*. Discipline skills you reach for as the work calls for them. Most are vendored and adapted from [mattpocock/skills](https://github.com/mattpocock/skills) by Matt Pocock (MIT) — adapted to this marketplace's conventions and the AFK/HITL execution model. See [ATTRIBUTION.md](plugins/engineering-craft/ATTRIBUTION.md) for what's vendored vs homegrown and the adaptations applied.
 
 | Skill | What it does |
 |---|---|
@@ -111,6 +111,6 @@ See [CONTRIBUTING.md](CONTRIBUTING.md). The contribution contract is the bundled
 
 ## License
 
-Licensed under the [MIT License](LICENSE).
+Licensed under the [MIT License](LICENSE). The vendored `engineering-craft` skills carry Matt Pocock's MIT license ([LICENSE-mattpocock](plugins/engineering-craft/LICENSE-mattpocock)) — see [ATTRIBUTION.md](plugins/engineering-craft/ATTRIBUTION.md); everything else is © toBzh30, MIT.
 
 This is an independent community project, not affiliated with or endorsed by Anthropic. "Claude" is a trademark of Anthropic, PBC.
