@@ -157,7 +157,7 @@ If you can't meet both conditions, you're past the trivial threshold — do the 
 
 ## Craft skills — when to suggest one
 
-The `engineering-craft` plugin ships discipline skills — `grill-with-docs`, `prototype`, `tdd`, `diagnose`, `to-issues`, `to-prd`, `improve-codebase-architecture`, `code-review`. They earn their keep when **offered at the right moment**, not only when the user names them. Each trigger below is deliberately narrow — the failure mode here is *nagging*, so a cue fires on a **named condition**, never "consider a craft skill at every phase." Calibrate to what the skill is *for*, not how often you could invoke it.
+The `engineering-craft` plugin ships discipline skills — `grill-with-docs`, `prototype`, `tdd`, `diagnose`, `to-issues`, `to-prd`, `improve-codebase-architecture`. Alongside them sits `/code-review`, which is **built into Claude Code itself** (no plugin needed, available in every repo). They earn their keep when **offered at the right moment**, not only when the user names them. Each trigger below is deliberately narrow — the failure mode here is *nagging*, so a cue fires on a **named condition**, never "consider a craft skill at every phase." Calibrate to what the skill is *for*, not how often you could invoke it.
 
 **Three rules govern every cue:**
 - **Suggest once per occurrence, then drop it** — a decline silences the cue *for that situation only*, never globally and never persisted. When the condition recurs (another fork, another bug, a later task) the cue is live again; never write a single "no" into a standing "don't suggest this skill." (Same restraint as *"silence is not approval"* — local to the moment.)
@@ -174,7 +174,7 @@ The `engineering-craft` plugin ships discipline skills — `grill-with-docs`, `p
 - **`to-prd`** (conservative) — an **initiative-scale** effort that needs a parent spec holding sub-issues. *Not:* anything smaller → `to-issues` or a single issue (a PRD on small work creates a competing intake path).
 - ↩ **`improve-codebase-architecture`** — a **coupling / no-seam smell** surfaces during `diagnose`, `tdd`, or Phase 6 reconcile. *Not:* a standalone "let's improve the architecture" — that stays user-initiated.
 
-**`code-review` — before a PR leaves your hands.** Run it on any **non-trivial** change, *for a human reviewer or for auto-merge alike*. Mode decides what happens **after** the review, not whether it runs:
+**`/code-review` (Claude Code built-in) — before a PR leaves your hands.** Run it on any **non-trivial** change, *for a human reviewer or for auto-merge alike*. Mode decides what happens **after** the review, not whether it runs:
 - **Solo / AFK `auto-merge`** → the review *is* the gate → merge.
 - **Team / `review-required`** → the review is pre-handoff polish → the human then reviews cleaner code.
 - **Either mode, trivia** (typo, one-line config, doc fix) → skip.
