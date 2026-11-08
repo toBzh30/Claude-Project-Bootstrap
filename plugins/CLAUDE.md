@@ -28,8 +28,12 @@ plugins/
 │       │   └── templates/       # issue templates (feature.yml, bug.yml, roadmap.md)
 │       ├── split-claudemd/
 │       │   └── SKILL.md         # CLAUDE.md hub-and-spokes refactor skill
-│       └── update-conventions/
-│           └── SKILL.md         # pull plugin-template improvements into an already-bootstrapped repo
+│       ├── update-conventions/
+│       │   └── SKILL.md         # pull plugin-template improvements into an already-bootstrapped repo
+│       └── orchestrate/
+│           ├── SKILL.md         # run a multi-issue plan through delegated workers (shared core)
+│           ├── brief-template.md
+│           └── executors/       # cloud.md (child sessions) · local.md (worktree subagents); one is read per run
 └── engineering-craft/              # ongoing CRAFT skills (enabled permanently) — mostly vendored from mattpocock/skills (MIT), plus homegrown skills
     ├── .claude-plugin/
     │   └── plugin.json
@@ -68,6 +72,7 @@ Each `SKILL.md` is both the skill definition and the executable instructions Cla
 | `bootstrap-working-agreements` | `bootstrap-working-agreements` | Orchestrator. Calls `github-project-setup` and `split-claudemd` as sub-steps. The template files here are the ones that land in target repos. |
 | `github-project-setup` | `github-project-setup` | Heaviest skill (~590 lines). Handles single-repo and multi-repo project shapes. `migrate_doc.py` is a starting-point script — adapted per target project, not run as-is. |
 | `split-claudemd` | `split-claudemd` | Lightest skill. Enforces the 200-line root CLAUDE.md cap. |
+| `orchestrate` | `orchestrate` | Ongoing, not setup: the parallel counterpart to the working-agreements AFK sweep. Picks its executor from the tools available (`create_session` → `executors/cloud.md`, else `executors/local.md`); the core in `SKILL.md` is shared. Lives here rather than in `engineering-craft` because it is homegrown and builds on this plugin's conventions (`afk.merge`, downgrade triggers, issue lifecycle). |
 | `update-conventions` | `Templates` | Post-bootstrap maintenance. One-way pull-down: reconciles a repo's copied `working-agreements.md` + issue templates against the bundled templates. Not part of the bootstrap flow. |
 
 ## Deferred / pending work

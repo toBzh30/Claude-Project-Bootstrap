@@ -8,7 +8,7 @@
   "plugins": [
     {
       "name": "claude-project-bootstrap",
-      "description": "Lay down working-agreements.md, roadmap.md, CLAUDE.md hub+spokes, and a GitHub Project (v2) with custom fields and labels — one command per new repo.",
+      "description": "Lay down working-agreements.md, roadmap.md, CLAUDE.md hub+spokes, and a GitHub Project (v2) with custom fields and labels — one command per new repo. Also ships orchestrate: run a multi-issue plan through delegated workers, in the cloud or locally.",
       "source": "./plugins/claude-project-bootstrap",
       "category": "development"
     },
