@@ -40,7 +40,7 @@ Run long builds and test suites in the background.
 ## When you're done
 1. Commit and push the branch.
 2. Open a PR against `<base branch>`. The body has a summary, the test output, and `Closes #<N>`.
-3. Do not merge <unless the orchestrator delegated auto-merge: then arm it only after green CI and a clean /code-review>.
+3. Do not merge, and do not arm auto-merge. The orchestrator reviews and merges.
 4. Report back: PR link, quoted command output, anything deferred, anything surprising.
 
 ## Stop and report instead of guessing if

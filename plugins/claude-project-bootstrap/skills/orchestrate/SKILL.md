@@ -1,6 +1,6 @@
 ---
 name: orchestrate
-description: Drive a multi-issue plan (an issue list, a milestone, or an epic) as an orchestrator. Delegate each issue to a worker (cloud child sessions or local worktree subagents, picked from the tools available) and keep planning, review, merging and the issue lifecycle yourself. Use when the user names a set of issues, a milestone or an epic and asks you to orchestrate it, run it in parallel, or work through it while they are away. The parallel counterpart to the sequential AFK sweep in working-agreements.md.
+description: Drive a multi-issue plan (an issue list, a milestone, or an epic) as an orchestrator. Delegate each issue to a worker (cloud child sessions or local worktree subagents, picked from the tools available) and keep planning, review, merging and the issue lifecycle yourself. Use when the user names a set of issues, a milestone or an epic and asks you to orchestrate it, run it in parallel, or delegate it to workers or subagents. Not for the sequential AFK sweep ("work through the AFK issues"), which stays in working-agreements.md.
 user-invocable: true
 ---
 
@@ -8,9 +8,14 @@ user-invocable: true
 
 You hold the plan. You don't implement it. Workers implement; you brief them, check their evidence, review their PRs, merge, close issues and report.
 
-This is the **parallel** counterpart to the sequential AFK sweep in `.claude/rules/working-agreements.md`. Everything there still applies: the issue lifecycle, the downgrade triggers, the `afk.merge` gate and "silence is not approval". This skill adds how to fan the work out and keep it coherent.
+This is the **parallel** counterpart to the sequential AFK sweep in `.claude/rules/working-agreements.md`. Everything there still applies (the issue lifecycle, the downgrade triggers, the `afk.merge` gate and "silence is not approval"), with one deliberate difference: a real bug found in review goes back to the worker for up to two fix rounds before the item parks (step 4). The sweep parks at once because it has no separate worker to send the finding to. This skill adds how to fan the work out and keep it coherent.
 
-Where a repo was never bootstrapped (no `working-agreements.md`, no `.claude/gh-project.json`), use the defaults stated below.
+**Repos that were never bootstrapped** (no `working-agreements.md`, no `.claude/gh-project.json`) get these defaults:
+
+- **No Project board.** Skip every board-field step (Status, `Mode`) and track state in issue comments only.
+- **Downgrade triggers.** Use the list in step 5.
+- **Doc reconciliation.** Each PR updates whatever `CLAUDE.md` / README / docs the change makes stale.
+- **Merge gate.** See step 0.
 
 ---
 
@@ -34,7 +39,7 @@ Then confirm, in one message:
 
 - **Definition of done:** "Done = #A, #B, #C closed. Anything needing a decision goes into one decisions issue at the end."
 - **Fix policy** (step 5). Default is `inline`.
-- **Merge gate** (step 4). Read `afk.merge` from `.claude/gh-project.json`; if that is absent, ask. Don't assume.
+- **Merge gate** (step 4). Read `afk.merge` from `.claude/gh-project.json`. If it is absent, ask. If the user can't answer, the default is `review-required`: reviewed PRs wait for a human instead of merging.
 - **Pre-authorised outward-facing steps**, if any (e.g. "deploy to staging is fine"). The default is none.
 
 If the user has already said they'll be away, send this message, use the defaults for anything they didn't answer, and proceed.
@@ -69,7 +74,7 @@ Use `brief-template.md`. Every brief contains:
 - what the worker may touch and what it must not,
 - the rules files and decision entries to read first,
 - **how to prove it works**: the exact commands, plus what output counts as passing,
-- the docs to reconcile in the **same** PR (CLAUDE.md spokes, rules files, decisions log) per working-agreements Phase 6,
+- the docs to reconcile in the **same** PR (CLAUDE.md spokes, rules files, decisions log; working-agreements Phase 6 where the repo has it),
 - the report-back format: PR link, quoted test output, anything deferred or surprising.
 
 Long builds and test runs go in the background. A worker that needs a product decision stops and reports. It doesn't guess.
@@ -82,7 +87,7 @@ Long builds and test runs go in the background. A worker that needs a product de
 4. **Merge** per the merge gate:
    - **`auto-merge`**: merge after green CI and a clean review (squash, unless the repo says otherwise).
    - **`review-required`**: leave the reviewed PR for a human. An item that depends on it parks until it merges.
-5. **Close the issue** (by hand if merging into an integration branch), set the board Status, and comment one line with the PR link.
+5. **Close the issue** (by hand if merging into an integration branch), set the board Status if the repo has a Project, and comment one line with the PR link.
 6. A **stalled worker is resumed**, not replaced. A fresh worker loses its context and repeats its mistakes. Replace it only if it is dead (failed session, crashed agent).
 
 ## Step 5 — What comes up mid-run
@@ -102,7 +107,7 @@ Apply the fix policy the user chose in step 0.
 2. It needs out-of-scope work first.
 3. An architectural fork with no clear default.
 4. An irreversible or outward-facing step that wasn't pre-authorised.
-5. A real bug survived two review rounds.
+5. A real bug survived two review rounds (the sweep's version parks on the first; see the intro).
 6. No green CI or no test seam.
 7. Thrashing: three cycles without converging.
 

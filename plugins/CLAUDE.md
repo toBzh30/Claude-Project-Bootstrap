@@ -8,7 +8,7 @@ This directory contains the plugin source. All substantive work happens here.
 
 ```
 plugins/
-├── claude-project-bootstrap/       # one-time project SETUP (run per new repo)
+├── claude-project-bootstrap/       # project SETUP (run per new repo) + the ongoing orchestrate skill
 │   ├── .claude-plugin/
 │   │   └── plugin.json          # plugin metadata (name, author)
 │   ├── LICENSE                  # our MIT license (© toBzh30)
@@ -47,7 +47,7 @@ plugins/
             └── SKILL.md
 ```
 
-Two plugins, one marketplace, **different lifecycles**: `claude-project-bootstrap` is one-time *setup* (run once per repo); `engineering-craft` is ongoing *craft* (enabled permanently, used on every task). Separate plugins so a craft-skill fix doesn't re-pull setup tooling, and setup-only users aren't forced to take the craft skills. Most `engineering-craft` skills are **fork-and-adapt** from `mattpocock/skills` — see its `ATTRIBUTION.md` for the source commit and the adaptations (ADR/glossary paths, stripped AFK absence-detection, Project-contract issue creation); a few (e.g. `checkpoint`) are **homegrown** Claude-coding craft, not upstream. The **vendored** skills are **tool-agnostic discipline, never infrastructure**, so they land additively in repos with their own test setup.
+Two plugins, one marketplace, **different lifecycles**: `claude-project-bootstrap` is mostly one-time *setup* (run once per repo), but it also carries the ongoing `orchestrate` skill and the hooks, so keep it enabled after bootstrap; `engineering-craft` is ongoing *craft* (enabled permanently, used on every task). Separate plugins so a craft-skill fix doesn't re-pull setup tooling, and setup-only users aren't forced to take the craft skills. Most `engineering-craft` skills are **fork-and-adapt** from `mattpocock/skills` — see its `ATTRIBUTION.md` for the source commit and the adaptations (ADR/glossary paths, stripped AFK absence-detection, Project-contract issue creation); a few (e.g. `checkpoint`) are **homegrown** Claude-coding craft, not upstream. The **vendored** skills are **tool-agnostic discipline, never infrastructure**, so they land additively in repos with their own test setup.
 
 ## Hooks ship from the plugin (unlike templates)
 

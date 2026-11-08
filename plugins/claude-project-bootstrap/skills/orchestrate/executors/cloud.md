@@ -29,8 +29,7 @@ Use when `mcp__claude-code-remote__create_session` is available. Each worker is 
 
 ## PRs and merging
 
-- The child pushes its branch and opens a PR against the base branch. You review it with `/code-review` and merge per the gate.
-- If step 0 chose `auto-merge` and the plan delegates it, a child may instead arm auto-merge on its own PR after green CI and its own `/code-review`. Spot-check the merged diff anyway.
+- The child pushes its branch and opens a PR against the base branch. You review it with `/code-review` and merge per the gate. Children never merge, not even their own PR (SKILL.md step 6).
 - Add GitHub access for another repo with `add_repo` only if the plan needs it.
 
 ## Cleanup
